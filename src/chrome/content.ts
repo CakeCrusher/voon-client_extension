@@ -1,9 +1,8 @@
 import { ChromeMessage, Sender, MessageResponse, DataInFrame, FrameData } from "../types";
 import { GET_VIDEO_FILESNIPPET } from "../schemas";
 import { fetchGraphQL } from "../helperFunctions";
-  
 
-const messagesFromReactAppListener = async (message: ChromeMessage, sender: chrome.runtime.MessageSender, response: MessageResponse) => {
+chrome.runtime.onMessage.addListener(async (message: ChromeMessage, sender: chrome.runtime.MessageSender, response: MessageResponse) => {
     console.log('message recieved');
 
     if (
@@ -139,6 +138,4 @@ const messagesFromReactAppListener = async (message: ChromeMessage, sender: chro
 
         response('finished file snippet')
     }
-}
-
-chrome.runtime.onMessage.addListener(messagesFromReactAppListener);
+});
