@@ -1,13 +1,9 @@
-// import { messagesFromReactAppListener } from './content/listener'
-
-import { ChromeMessage, Sender, MessageResponse, DataInFrameOut, FrameDataOut, VoonOut } from "../types";
-// import { GET_VIDEO_FILESNIPPET } from "../schemas";
-// import { activateFileSnippet } from "./content/fileSnippet/fileSnippet";
-// import { fetchGraphQL } from "../helperFunctions";
-import { getFileSnippet, currentFrameData } from "./content/fileSnippet/fileSnippet";
+import { ChromeMessage, Sender, MessageResponse, DataInFrame, FrameData } from "../types";
+import { GET_VIDEO_FILESNIPPET } from "../schemas";
+import { fetchGraphQL } from "../helperFunctions";
   
 
-export const messagesFromReactAppListener = async (message: ChromeMessage, sender: chrome.runtime.MessageSender, response: MessageResponse) => {
+const messagesFromReactAppListener = async (message: ChromeMessage, sender: chrome.runtime.MessageSender, response: MessageResponse) => {
     console.log('message recieved');
 
     if (
@@ -15,8 +11,10 @@ export const messagesFromReactAppListener = async (message: ChromeMessage, sende
         message.from === Sender.React &&
         message.message === "activate file snippet"
     ) {
-
-        const fileSnippet = await getFileSnippet()
+        const videoURL = 'https://www.youtube.com/watch?v=hQzlNlHcN0A'
+        const videoId = videoURL.includes('v=') ? videoURL.split('v=')[1].split('&')[0] : videoURL.split('/')[3]
+        const getVideoFileSnippet = await fetchGraphQL(GET_VIDEO_FILESNIPPET, {videoId})
+        const fileSnippet = getVideoFileSnippet.data.video_by_pk.fileSnippets[0]
         console.log("File Snippet: ", fileSnippet);
 
         // sets up containers red and green
@@ -35,7 +33,7 @@ export const messagesFromReactAppListener = async (message: ChromeMessage, sende
         const clearGB = () => {
             greenBox.innerHTML = ''
         }
-        const relativeFiF = (fileInFrame: DataInFrameOut) => {
+        const relativeFiF = (fileInFrame: DataInFrame) => {
             const xRatio = screenWidthInt / fileSnippet.width
             const yRatio = screenHeightInt / fileSnippet.height
             const newFileInFrame = {...fileInFrame}
@@ -77,7 +75,23 @@ export const messagesFromReactAppListener = async (message: ChromeMessage, sende
         
         screen?.parentElement?.parentElement?.appendChild(redBox)
         
-
+        const currentFrameData = (htmlVideoPlayer: any) => {
+            const currentTime = htmlVideoPlayer.currentTime
+            const duration = htmlVideoPlayer.duration
+            const disparityTolerance = 1/duration
+        
+            const voonFrameDuration = 1/fileSnippet.fps
+            
+            const currentFrameData = fileSnippet.frameData.find((fd: FrameData) => {
+                if (Math.abs(currentTime-(voonFrameDuration*fd.frame)) <= 0.5) {
+                    return true
+                } else {
+                    return false
+                }
+            })
+        
+            return currentFrameData
+        }
         
         // runs every equidistant amt of time
         let frameDataShowing: number | null
@@ -87,9 +101,9 @@ export const messagesFromReactAppListener = async (message: ChromeMessage, sende
             console.log("ran annuity");
             
             if (videoPlayer){
-                const currentFD = currentFrameData(htmlVideoPlayer, fileSnippet) ? currentFrameData(htmlVideoPlayer, fileSnippet) : {frame: null, fileInFrames: []}
+                const currentFD = currentFrameData(htmlVideoPlayer) ? currentFrameData(htmlVideoPlayer) : {frame: null, fileInFrames: []}
                 const overlayShowing = !videoPlayer.classList.contains('ytp-autohide')
-                if (currentFD && currentFD.frame !== frameDataShowing) {
+                if (currentFD.frame !== frameDataShowing) {
                     console.log('Changed frameData to frame: ', currentFD.frame);
                     
                     code.style.display = 'none'
