@@ -1,0 +1,5 @@
+{
+    "watch": ["src", "craco.config.js"],
+    "ext": "ts,css",
+    "exec": "cross-env INLINE_RUNTIME_CHUNK=false craco build"
+}
