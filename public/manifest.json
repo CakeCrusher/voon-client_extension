@@ -11,7 +11,8 @@
     "512": "logo512.png"
   },
   "permissions": [
-    "activeTab"
+    "activeTab",
+    "tabs"
   ],
   "optional_permissions": [
     "downloads",

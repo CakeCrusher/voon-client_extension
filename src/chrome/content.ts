@@ -1,40 +1,50 @@
-import { ChromeMessage, Sender, MessageResponse, DataInFrame, FrameData } from "../types";
+import { ChromeMessage, Sender, MessageResponse, DataInFrame, FrameData, Message } from "../types";
 import { GET_VIDEO_FILESNIPPET } from "../schemas";
 import { fetchGraphQL } from "../helperFunctions";
+import { 
+    fileSnippetBtnStyle,
+    greenBoxOSStyle,
+    greenBoxOHStyle,
+    codeSnippetRMStyle,
+    codeSnippetLMStyle,
+    redBoxStyle,
+    greenBoxStyle,
+ } from "./style";
 
-chrome.runtime.onMessage.addListener(async (message: ChromeMessage, sender: chrome.runtime.MessageSender, response: MessageResponse) => {
-    console.log('message recieved');
+// content message listener function
+const contentMessageListener = async (message: ChromeMessage, sender: chrome.runtime.MessageSender) => {
+    console.log('Message recieved: ', message);
 
     if (
         sender.id === chrome.runtime.id &&
-        message.from === Sender.React &&
-        message.message === "activate file snippet"
+        message.from === Sender.Background &&
+        message.message === Message.ACTIVATE_FILESNIPPET
     ) {
+        console.log('Activating file snippet');
         const videoURL = 'https://www.youtube.com/watch?v=hQzlNlHcN0A'
         const videoId = videoURL.includes('v=') ? videoURL.split('v=')[1].split('&')[0] : videoURL.split('/')[3]
         const getVideoFileSnippet = await fetchGraphQL(GET_VIDEO_FILESNIPPET, {videoId})
         const fileSnippet = getVideoFileSnippet.data.video_by_pk.fileSnippets[0]
         console.log("File Snippet: ", fileSnippet);
 
+        // parse the integer from a string like "12px"
+        
+
         // sets up containers red and green
         const screen = document.querySelector<HTMLElement>('.video-stream')!
         let screenHeight = screen.style.height
-        let screenHeightInt = parseInt(screenHeight.slice(0,screenHeight.length - 2))
         let screenWidth = screen.style.width
-        let screenWidthInt = parseInt(screenWidth.slice(0,screenWidth.length - 2))
         let redBox = document.createElement('div')
-        redBox.style.cssText =
-            `position:relative;left:-1px;display:flex;align-items:center;justify-content:center;height:${screenHeight};width:100%;`
+        redBox.style.cssText = redBoxStyle(screenHeight)
         let greenBox = document.createElement('div')
-        greenBox.style.cssText =
-            `position:relative;bottom:0;height:${screenHeight};width:${screenWidth};background-color:rgba(0,255,0,0.5);`
+        greenBox.style.cssText = greenBoxStyle(screenWidth, screenHeight)
         
         const clearGB = () => {
             greenBox.innerHTML = ''
         }
-        const relativeFiF = (fileInFrame: DataInFrame) => {
-            const xRatio = screenWidthInt / fileSnippet.width
-            const yRatio = screenHeightInt / fileSnippet.height
+        const relativeFiF = (fileInFrame: DataInFrame): DataInFrame => {
+            const xRatio = parseInt(screenWidth) / fileSnippet.width
+            const yRatio = parseInt(screenHeight) / fileSnippet.height
             const newFileInFrame = {...fileInFrame}
             newFileInFrame['x'] = Math.round(fileInFrame.x*xRatio)
             newFileInFrame['width'] = Math.round(fileInFrame.width*xRatio)
@@ -48,7 +58,7 @@ chrome.runtime.onMessage.addListener(async (message: ChromeMessage, sender: chro
         
         const fileBtn = (ele: HTMLElement, url: string, codeFrame: HTMLIFrameElement, relFiF: any) => {
             const centerFiF =  relFiF.x + (relFiF.width/2)
-            let isFiFRightMost = centerFiF > (screenWidthInt/2) ? true : false
+            let isFiFRightMost = centerFiF > (parseInt(screenWidth)/2) ? true : false
             ele.addEventListener('click', () => {
                 console.log('FiF: ', relFiF);
                 console.log('RightMost: ', isFiFRightMost);
@@ -62,10 +72,10 @@ chrome.runtime.onMessage.addListener(async (message: ChromeMessage, sender: chro
                 codeFrame.src = url
         
                 if (isFiFRightMost) {
-                    code.style.cssText = `position:absolute;display:${currentDisplay};z-index:11;left:0px;top:0px;width:${relFiF.x}px;height:${screenHeight}`
+                    code.style.cssText = codeSnippetRMStyle(currentDisplay, relFiF, screenHeight)
                 } else {
                     const endFiF = relFiF.x+relFiF.width
-                    code.style.cssText = `position:absolute;display:${currentDisplay};z-index:11;left:${endFiF}px;top:0px;width:${screenWidthInt-endFiF}px;height:${screenHeight}`
+                    code.style.cssText = codeSnippetLMStyle(currentDisplay, relFiF, screenWidth, screenHeight)
                 }
             })
         }
@@ -97,7 +107,6 @@ chrome.runtime.onMessage.addListener(async (message: ChromeMessage, sender: chro
         const annuity = async () => {
             const videoPlayer: any = document.getElementById('movie_player')
             const htmlVideoPlayer: any = document.getElementsByTagName('video')[0]
-            console.log("ran annuity");
             
             if (videoPlayer){
                 const currentFD = currentFrameData(htmlVideoPlayer) ? currentFrameData(htmlVideoPlayer) : {frame: null, fileInFrames: []}
@@ -112,7 +121,7 @@ chrome.runtime.onMessage.addListener(async (message: ChromeMessage, sender: chro
                     for (const fileInFrame of currentFD.fileInFrames) {
                         const btn = document.createElement('div')
                         const relFiF = relativeFiF(fileInFrame)
-                        btn.style.cssText = `position:absolute;z-index:10;height:${relFiF.height}px;width:${relFiF.width}px;border:1px solid red;left:${relFiF.x}px;top:${relFiF.y}px`
+                        btn.style.cssText = fileSnippetBtnStyle(relFiF)
                         greenBox.appendChild(btn)
                 
                         const snippetURL = 'https://voon-snippet.herokuapp.com/' + fileSnippet.githubURL + '/blob/master/' + fileInFrame.fileURL
@@ -121,21 +130,18 @@ chrome.runtime.onMessage.addListener(async (message: ChromeMessage, sender: chro
                     frameDataShowing = currentFD.frame
                 }
                 if (overlayShowing) {
-                    console.log('Showing voon');
-                    
-                    greenBox.style.cssText =
-                        `position:relative;display:block;bottom:0;height:${screenHeight};width:${screenWidth};background-color:rgba(0,255,0,0.5);`
+                    greenBox.style.cssText = greenBoxOSStyle(screenHeight, screenWidth)
                 } else {
-                    greenBox.style.cssText =
-                        `position:relative;display:none;bottom:0;height:${screenHeight};width:${screenWidth};background-color:rgba(0,255,0,0.5);`
-                    // code.style.display = 'none'
+                    greenBox.style.cssText = greenBoxOHStyle(screenHeight, screenWidth)
                 }
         
             }
         }
         
+        console.log('Starting annuity');
         setInterval(annuity, 500)
 
-        response('finished file snippet')
     }
-});
+}
+// apply contentMessageListener to runtime
+chrome.runtime.onMessage.addListener(contentMessageListener);

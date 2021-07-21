@@ -20,3 +20,7 @@ query MyQuery($videoId: String!) {
   }
 }
 `
+
+export const CREATE_FILESNIPPET: String = `
+
+`

@@ -1,11 +1,26 @@
 export enum Sender {
+    Background,
     React,
     Content
 }
 
+export enum Message {
+    CREATE_FILESNIPPET = 'create file snippet',
+    ACTIVATE_FILESNIPPET = 'activate file snippet',
+    REQUEST_FILESNIPPET = 'request file snippet',
+    FINISHED_FILESNIPPET = 'finished file snippet',
+}
+
 export interface ChromeMessage {
     from: Sender,
-    message: any
+    message: string,
+    tab?: Tab,
+    payload?: any,
+}
+
+export type Tab = {
+    id?: number,
+    url?: string,
 }
 
 export type MessageResponse = (response?: any) => void

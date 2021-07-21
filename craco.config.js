@@ -16,8 +16,8 @@ module.exports = {
                 optimization: {
                     ...webpackConfig.optimization,
                     runtimeChunk: false,
-                }
+                } 
             }
         },
     }
-}
+} 
