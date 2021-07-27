@@ -9,6 +9,9 @@ export enum Message {
     ACTIVATE_FILESNIPPET = 'activate file snippet',
     REQUEST_FILESNIPPET = 'request file snippet',
     FINISHED_FILESNIPPET = 'finished file snippet',
+    ACTIVATE_LIVECOMMENT = 'activate live comment',
+    CHANGE_LIVECOMMENT_VISIBILITY = 'change live comment visibility',
+    INITIATE_ENVIRONMENT = 'initiate environment',
 }
 
 export interface ChromeMessage {
@@ -18,6 +21,17 @@ export interface ChromeMessage {
     payload?: any,
 }
 
+export type LiveCommentOut = {
+    comment: string,
+    user: string,
+    frame: number,
+    replies?: ReplyOut[]
+}
+type ReplyOut = {
+    comment: string,
+    user: string,
+}
+
 export type Tab = {
     id?: number,
     url?: string,
@@ -25,7 +39,7 @@ export type Tab = {
 
 export type MessageResponse = (response?: any) => void
 
-export type MakeVoonIn = {
+export type MakeFileSnippetIn = {
     videoId: String
     githubURL: String
     fps: number
@@ -37,7 +51,7 @@ type Shape = {
     y: number
 }
 
-export type VoonOut = {
+export type FileSnippetOut = {
     githubURL: String
     fps: number
     height: number
@@ -70,4 +84,12 @@ export type DataInFrame = {
     width: number
     height: number
 }
-  
+
+export type FileSnippet = {
+    state: boolean;
+}
+
+export type LiveComment = {
+    state: boolean;
+    lowVisibility: boolean;
+}

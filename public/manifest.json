@@ -12,7 +12,8 @@
   },
   "permissions": [
     "activeTab",
-    "tabs"
+    "tabs",
+    "storage"
   ],
   "optional_permissions": [
     "downloads",

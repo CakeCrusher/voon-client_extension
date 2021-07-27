@@ -1,10 +1,30 @@
+import {
+  Button,
+  Box,
+  ChakraProvider,
+  Code,
+  DarkMode,
+  Flex,
+  IconButton,
+  Link,
+  Menu,
+  MenuButton,
+  MenuItem,
+  MenuList,
+  OrderedList,
+  Spinner,
+  useClipboard,
+  Input,
+} from "@chakra-ui/react";
 import React, { useState, useEffect } from 'react'
 import './App.css';
 import { ChromeMessage, Sender, MessageResponse, Message } from "./types";
+import AppsWrapper from "./components/AppsWrapper";
 
 function App() {
   const [url, setUrl] = useState<string>('')
   const [fps, setFPS] = useState<number>(0) // its actually "per amount of frames" not "frame per second"
+  const [height, setHeight] = useState<number>(16)
 
   useEffect(() => {
     const queryInfo = {active: true, lastFocusedWindow: true}
@@ -77,20 +97,24 @@ function App() {
         message
       );
     })
-  }
-  // convert string to number
-  
-
+  } 
   
   return (
-    <div className="App">
-      <h1>Ready</h1>
-      <h1>{url}</h1>
-      
-      <button onClick={activateFileSnippet}>activate file snippet</button>
-      <input type="number" value={fps} onChange={e => setFPS(parseInt(e.target.value))}/>
-      <button onClick={createFileSnippet}>create file snippet</button>
-    </div>
+    <ChakraProvider>
+      <DarkMode>
+        <Flex
+          bgColor="gray.900"
+          color="white"
+          direction="column"
+          rounded="sm"
+          shadow="lg"
+          w="400px"
+          h="full"
+        >
+          <AppsWrapper />
+        </Flex>
+      </DarkMode>
+    </ChakraProvider>
   )
 }  
 

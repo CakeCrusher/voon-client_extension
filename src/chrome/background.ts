@@ -1,9 +1,34 @@
-import { ChromeMessage, Message, Sender } from "../types";
+import { ChromeMessage, FileSnippet, LiveComment, Message, Sender } from "../types";
 import { fetchGraphQL, wait } from "../helperFunctions";
-import { GET_VIDEO_FILESNIPPET } from "../schemas";
+import { GET_VIDEO_FILESNIPPET, GET_VIDEO_LIVECOMMENT } from "../schemas";
+
+// // Initiate storage variables in a chrome extension
+// console.log(`Initiating storage variables in a chrome extension`);
+
+// const fileSnippet: FileSnippet = {state: true}
+// chrome.storage.sync.set({fileSnippet});
+// const liveComment: LiveComment = {state: false, lowVisibility: false}
+// chrome.storage.sync.set({liveComment});
+
+
+
+const initiateEnvironmentIfPossible = async (tabId: number, url: string) => {
+  if (url?.includes('www.youtube.com')) {
+    const message: ChromeMessage = {
+      from: Sender.Background,
+      message: Message.INITIATE_ENVIRONMENT,
+      payload: {url}
+    }
+    chrome.tabs.sendMessage(
+      tabId,
+      message
+    );
+  } else {
+    Error('Not a youtube video');
+  }
+}
 
 const sendFileSnippetIfAvailable = async (tabId: number, url: string) => {
-  url = 'https://www.youtube.com/watch?v=hQzlNlHcN0A'
   if (url?.includes('www.youtube.com')) {
     const videoId = url.includes('v=') ? url.split('v=')[1] : url.split('/')[4];
     const variables = {videoId};
@@ -20,24 +45,60 @@ const sendFileSnippetIfAvailable = async (tabId: number, url: string) => {
         message
       );
     }
+    else {
+      Error('No file snippet available');
+    }
+  } else {
+    Error('Not a youtube video');
+  }
+}
+
+const sendLiveCommentIfAvailable = async (tabId: number, url: string) => {
+  if (url?.includes('www.youtube.com')) {
+    const videoId = url.includes('v=') ? url.split('v=')[1] : url.split('/')[4];
+    const variables = {videoId};
+    const getLiveComment = await fetchGraphQL(GET_VIDEO_LIVECOMMENT, variables);
+    const liveComments = getLiveComment.data.video_by_pk ? getLiveComment.data.video_by_pk.liveComments : null;
+    if (liveComments) {
+      const message: ChromeMessage = {
+        from: Sender.Background,
+        message: Message.ACTIVATE_LIVECOMMENT,
+        payload: {liveComments}
+      }
+      chrome.tabs.sendMessage(
+        tabId,
+        message
+      );
+    }
+    else {
+      Error('No live comments available');
+    }
   } else {
     Error('Not a youtube video');
   }
 }
 
 const onUpdatedListener = (tabId: number, changeInfo: chrome.tabs.TabChangeInfo, tab: chrome.tabs.Tab) => {
+  console.log('change info: ', changeInfo);
+  
   if (tab.url && changeInfo.status === "complete") {
     console.log('Sending file snippet to tab as requested by Updated Tab');
     
-    sendFileSnippetIfAvailable(tabId, tab.url);
+    initiateEnvironmentIfPossible(tabId, tab.url);
+    setTimeout(() => {
+      sendFileSnippetIfAvailable(tabId, tab.url!);
+      sendLiveCommentIfAvailable(tabId, tab.url!);
+    }, 500);
   }
 }
 chrome.tabs.onUpdated.addListener(onUpdatedListener)
 
+
+
 const onMessageListener =  (message: ChromeMessage, sender: chrome.runtime.MessageSender) => {
   if (
     sender.id === chrome.runtime.id &&
-    message.from === Sender.React &&
+    message.from === (Sender.React || Sender.Content) &&
     message.message === Message.REQUEST_FILESNIPPET
   ) {
     console.log('Sending file snippet to tab as requested by React');
@@ -50,7 +111,7 @@ const onMessageListener =  (message: ChromeMessage, sender: chrome.runtime.Messa
     message.message === Message.CREATE_FILESNIPPET
   ) {
     console.log('Creating file snippet as requested by React');
-    
+     
     createFileSnippet(message.tab!.url!, message.payload!.fps!, message.tab!.id!);
   }
 }
@@ -58,21 +119,23 @@ chrome.runtime.onMessage.addListener(onMessageListener);
 
 const createFileSnippet = async (url: string, fps: number, tabId: number) => {
   
-  await wait()
-  // var requestOptions = {
-  //     method: 'POST',
-  //     headers: {
-  //         'content-type': 'application/json',
-  //         'authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NCwiaWF0IjoxNjIyMzE1MTA5LCJleHAiOjE2MjQ5MDcxMDl9.m450OrMGlChAVcU2z99FzzmVAOsF7zu6y7oa_r6xNk8'
-  //     },
-  //     body: JSON.stringify({
-  //         "url": url,
-  //         "per_frame": fps
-  //     }),
-  // };
-  // const API = 'http://18.183.131.213:8080/process-video'
-  // const res = await fetch(API, requestOptions).then((res:any) => res.json())
+  // await wait(1000)
+  var requestOptions = {
+      method: 'POST',
+      headers: {
+          'content-type': 'application/json',
+          'authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NCwiaWF0IjoxNjIyMzE1MTA5LCJleHAiOjE2MjQ5MDcxMDl9.m450OrMGlChAVcU2z99FzzmVAOsF7zu6y7oa_r6xNk8'
+      },
+      body: JSON.stringify({
+          "url": url,
+          "per_frame": fps
+      }),
+  };
+  const API = 'http://18.183.131.213:8080/process-video'
+  const res = await fetch(API, requestOptions).then((res:any) => res.json())
 
+  console.log(res);
+  
   console.log('Sending notice of completion to tab');
   const message = {
     from: Sender.Background,

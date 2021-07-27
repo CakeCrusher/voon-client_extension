@@ -2,3 +2,50 @@
   height: 600px;
   width: 800px;
 }
+.colorSliver {
+  background-color: rgba(0, 0, 0, 0.5);
+  width: 3px;
+  transition: width 0.3s;
+}
+.appContainer {
+  margin: 2px 0px;
+}
+.appIconContainer {
+  cursor: pointer;
+  position: relative;
+}
+.appIcon {
+  position: absolute;
+}
+.appContentContainer {
+  transition: padding-left 0.3s;
+}
+.appDescription {
+  overflow: hidden;
+  opacity: 0.5;
+  max-height: 0;
+  transition: max-height 0.3s;
+}
+.success {
+  background-color: #27a844;
+  border:2px solid #179834;
+  color: white;
+}
+.warning {
+  background-color: #fec107;
+  color: black;
+}
+
+/* Apps */
+.appContent {
+  background-color: rgba(23,26,34,0.5);
+  border-top-left-radius: 5px;
+  border-bottom-left-radius: 5px;
+  padding: 0px 20px;
+}
+.appInput {
+  /* color: rgba(23,26,34,1) */
+}
+.generateBtn {
+
+}

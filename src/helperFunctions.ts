@@ -16,4 +16,4 @@ export const fetchGraphQL = async (schema: String, variables: Object = {}) => {
     return res
 }
 
-export const wait = (): Promise<boolean> => new Promise(resolve => setTimeout(resolve, 1000, true))
+export const wait = (ms: number): Promise<boolean> => new Promise(resolve => setTimeout(resolve, ms, true))
