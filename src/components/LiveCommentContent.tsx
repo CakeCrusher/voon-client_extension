@@ -48,6 +48,7 @@ const LiveCommentContent: FunctionComponent<LiveCommentContentProps> = ({liveCom
       ...liveComment,
       lowVisibility: !liveComment.lowVisibility
     }
+    chrome.storage.sync.set({liveComment: newLiveComment});
     setLiveComment(newLiveComment);
   };
   

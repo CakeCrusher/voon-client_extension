@@ -11,52 +11,97 @@ import {
     redBoxStyle,
     greenBoxStyle,
 } from "./style";
+import { type } from "os";
 
+// fundimentals
 let videoId: string
-// let theatre: HTMLElement
-// let blueBox: HTMLElement
 let screen: HTMLElement
-let redBox: HTMLElement
-let greenBox: HTMLElement
-let clearGB: Function
-let relativeFiF: Function
 let screenHeight: string
 let screenWidth: string
+let videoPlayer: any
+let overlayShowing: boolean
+let htmlVideoPlayer: any
+let currentTime: number
+let duration: number
+let redBox: HTMLElement
+let greenBox: HTMLElement
+
+// FileSnippet
+let relativeFiF: Function
 let fileSnippet: FileSnippetOut | undefined
+let fileSnippetContainer: HTMLElement | undefined
 let fileSnippetFunction: Function
 let fileSnippetState: FileSnippet
-let liveComments: LiveCommentOut[] = [
-  {
-    "comment": "What are these boxes on my screen?",
-    "frame": 0,
-    "user": "scratchyHead",
-    "replies": [
-      {
-        "comment": "They are buttons that open a interactable file directly on the video.",
-        "user": "CakeCrusher"
-      },
-      {
-        "comment": "BARK!!!",
-        "user": "HYPEDog"
-      }
-    ]
-  }
-]
+
+// LiveComment
+let liveCommentsContainer: HTMLElement | undefined
+let liveComments: LiveCommentOut[] | undefined
 let liveCommentState: LiveComment
 
-chrome.storage.sync.get(["fileSnippet", "liveComment"], (res) => {
-  fileSnippetState = res.fileSnippet
-  liveCommentState = res.liveComment
-})
+// const readComments = () => {
+//   let commentThreads = document.querySelectorAll('ytd-comment-thread-renderer')
+//   let commentThread = commentThreads[1]
+//   let commentBody = commentThread.querySelector("#main")
+//   let replies = commentThread.querySelector("#replies").querySelectorAll("ytd-comment-replies-renderer")
+//   let reply = replies[0]
+//   let replyBody = reply.querySelector("#main")
+//   // works for both comment and reply
+//   let commentHead
 
+//   // scrape comments and replies from youtube dom and store them in a json object
+//   let comments = []
+//   if (commentBody) {
+//     let comment = {
+//       id: commentBody.getAttribute('id'),
+//       author: commentBody.querySelector('ytd-comment-user-renderer').getAttribute('data-ytid'),
+//       authorImage: commentBody.querySelector('ytd-comment-user-renderer').getAttribute('src'),
+//       authorName: commentBody.querySelector('ytd-comment-user-renderer').getAttribute('aria-label'),
+//       authorUrl: commentBody.querySelector('ytd-comment-user-renderer').getAttribute('href'),
+//       text: commentBody.querySelector('ytd-comment-text-renderer').innerHTML,
+//       time: commentBody.querySelector('yt-formatted-string').innerHTML,
+//       replyCount: reply.querySelector('ytd-comment-replies-renderer').getAttribute('aria-label'),
+//       replies: []
+//     }
+//     comments.push(comment)
+//   }
+//   if (replies) {
+//     for (let i = 0; i < replies.length; i++) {
+//       let reply = {
+//         id: replies[i].getAttribute('id'),
+//         author: replies[i].querySelector('ytd-comment-user-renderer').getAttribute('data-ytid'),
+//         authorImage: replies[i].querySelector('ytd-comment-user-renderer').getAttribute('src'),
+//         authorName: replies[i].querySelector('ytd-comment-user-renderer').getAttribute('aria-label'),
+//         authorUrl: replies[i].querySelector('ytd-comment-user-renderer').getAttribute('href'),
+//         text: replies[i].querySelector('ytd-comment-text-renderer').innerHTML,
+//         time: replies[i].querySelector('yt-formatted-string').innerHTML,
+//         replyCount: replies[i].querySelector('ytd-comment-replies-renderer').getAttribute('aria-label'),
+//         replies: []
+//       }
+//       comments[i].replies.push
+// }
 
 const clock = () => {
   if (document.querySelector<HTMLElement>('.video-stream')) {
     screen = document.querySelector<HTMLElement>('.video-stream')!
     screenHeight = screen.style.height
     screenWidth = screen.style.width
+    if (fileSnippetContainer) {
+      fileSnippetContainer.style.cssText = `width: ${screenWidth}; height: ${screenHeight};`
+    }
+    if (liveCommentsContainer) {
+      liveCommentsContainer.style.cssText = `width: ${Math.round(parseInt(screenWidth)/3)}px; max-height: ${screenHeight};`
+    }
+
     redBox.style.cssText = redBoxStyle(screenHeight)
-    greenBox.style.cssText = greenBoxStyle(screenWidth, screenHeight)
+    overlayShowing = !videoPlayer.classList.contains('ytp-autohide')
+    if (overlayShowing) {
+      greenBox!.style.cssText = greenBoxStyle(screenWidth, screenHeight) + SHOW
+    } else {
+      greenBox!.style.cssText = greenBoxStyle(screenWidth, screenHeight) + HIDDEN
+    }
+
+    currentTime = htmlVideoPlayer.currentTime
+    duration = htmlVideoPlayer.duration
   }
   if (liveComments && liveCommentState.state) {
     liveCommentFunction()
@@ -68,15 +113,31 @@ const clock = () => {
 setInterval(clock, 500)
 
 const liveCommentFunction = async () => { 
-  console.log("LCF ran");
-   
-  let liveCommentsContainer = document.createElement('div')
-  liveCommentsContainer.className = 'liveCommentsContainer'
-  liveCommentsContainer.style.cssText = `width: ${Math.round(parseInt(screenWidth)/3)}px; height: ${screenWidth}` 
+  liveCommentsContainer!.innerHTML = ""
+
+  const commentFilterByTime = () => {
+    const filteredComments = liveComments!.filter(comment => {
+      if (Math.abs(comment.time - currentTime) < 1) {
+        return true
+      } else {
+        return false
+      }
+    })
+    // order objects by a key in order of smallest to largest
+    const orderedComments = filteredComments.sort((a, b) => {
+      return a.time - b.time
+    })
+
+    return orderedComments
+  }
+  const relevantComments = commentFilterByTime()
   
-  for (const comment of liveComments) {
+  for (const comment of relevantComments) {
     let commentContainer = document.createElement('div')
     commentContainer.className = 'commentContainer'
+    if (liveCommentState.lowVisibility) {
+      commentContainer.style.cssText = `opacity: 0.5;`
+    }
 
     const createComment = (user: string, comment: string, container: HTMLElement, showSpacer: boolean = true) => {
       let commentHead = document.createElement('div')
@@ -95,34 +156,50 @@ const liveCommentFunction = async () => {
         container.appendChild(spacer)
       }
     }
-
+    const showCommentSpacer = Boolean(comment.replies)
     createComment(
       comment.user,
       comment.comment,
-      commentContainer
+      commentContainer,
+      showCommentSpacer
     )
 
     if (comment.replies) {
       let repliesContainer = document.createElement('div')
       repliesContainer.className = 'repliesContainer'
 
+      const lastReply = comment.replies[comment.replies.length - 1]
+
       for (const reply of comment.replies) {
+        const showReplySpacer = reply.comment !== lastReply.comment
         createComment(
           reply.user,
           reply.comment,
           repliesContainer,
-          false
+          showReplySpacer
         )
       }
 
       commentContainer.appendChild(repliesContainer)
     }
 
-    liveCommentsContainer.appendChild(commentContainer)
+    liveCommentsContainer!.appendChild(commentContainer)
   }
+}
 
+const initiateFileSnippetContainer = () => {
+  fileSnippetContainer = document.createElement('div')
+  fileSnippetContainer.className = 'fileSnippetContainer'
+  fileSnippetContainer.style.cssText = `width: ${screenWidth}; height: ${screenHeight};`
+  greenBox!.appendChild(fileSnippetContainer)
+}
+const initiateLiveCommentsContainer = () => {
+  liveCommentsContainer = document.createElement('div')
+  liveCommentsContainer.className = 'liveCommentsContainer'
+  liveCommentsContainer.style.cssText = `width: ${Math.round(parseInt(screenWidth)/3)}px; height: ${screenHeight};`
   greenBox!.appendChild(liveCommentsContainer)
 }
+
 
 const onStorageChange = async (changes: any, namespace: any) => {
   const keysChanged = Object.keys(changes);
@@ -133,6 +210,7 @@ const onStorageChange = async (changes: any, namespace: any) => {
       // when fileSnippet activation changes
       if (changes.fileSnippet.newValue.state) {
         // when fileSnippet is activated
+        initiateFileSnippetContainer()
         const queryInfo: chrome.tabs.QueryInfo = {
           active: true,
           currentWindow: true
@@ -152,18 +230,24 @@ const onStorageChange = async (changes: any, namespace: any) => {
         }) 
       }
       if (!changes.fileSnippet.newValue.state) {
-        console.log('Cleared GB: ', changes);
-        
-        clearGB()
+        fileSnippetContainer!.remove()
+        fileSnippetContainer = undefined
       }
     }
   }
   if (keysChanged.includes('liveComment')) {
     liveCommentState = changes.liveComment.newValue
+    console.log('new LiveCommentState: ', liveCommentState);
+    
     if (changes.liveComment.newValue.state !== changes.liveComment.oldValue.state) {
       // when liveComment activation changes
+      if (changes.liveComment.newValue.state) {
+        initiateLiveCommentsContainer()
+      }
       if (!changes.liveComment.newValue.state) {
         // when liveComment is deactivated
+        liveCommentsContainer!.remove()
+        liveCommentsContainer = undefined
       }
     }
     if (changes.liveComment.newValue.lowVisibility !== changes.liveComment.oldValue.lowVisibility) {
@@ -188,6 +272,7 @@ const contentMessageListener = async (message: ChromeMessage, sender: chrome.run
   ) {
     fileSnippet = undefined
     console.log('Injecting css');
+    
     // create a style element and append it to the head of the document
     const baseStyle = document.createElement('style');
     baseStyle.type = 'text/css';
@@ -206,12 +291,40 @@ const contentMessageListener = async (message: ChromeMessage, sender: chrome.run
     greenBox = document.createElement('div')
     greenBox.id = 'greenBox'
     greenBox.style.cssText = greenBoxStyle(screenWidth, screenHeight)
+
+    videoPlayer = document.getElementById('movie_player')
+    overlayShowing = videoPlayer.classList.contains('ytp-autohide')
+
+    htmlVideoPlayer = document.getElementsByTagName('video')[0]
+    currentTime = htmlVideoPlayer.currentTime
+    duration = htmlVideoPlayer.duration
+
+    chrome.storage.sync.get(['fileSnippet', 'liveComment'], (res) => {
+      if (res.fileSnippet) {
+        fileSnippetState = res.fileSnippet
+        if (fileSnippetState.state) {
+          initiateFileSnippetContainer()
+        }
+      }
+      if (res.liveComment) {
+        liveCommentState = res.liveComment
+        if (liveCommentState.state) {
+          initiateLiveCommentsContainer()
+        }
+      }
+    })
+
     redBox.appendChild(greenBox!)
     screen.parentElement?.parentElement?.appendChild(redBox)
-    
-    clearGB = () => {
-      greenBox.innerHTML = ''
-    }
+  }
+  if (
+    sender.id === chrome.runtime.id &&
+    message.from === Sender.Background &&
+    message.message === Message.ACTIVATE_LIVECOMMENT
+  ) {
+    console.log('Live comments: ', message.payload.liveComments);
+    liveComments = message.payload.liveComments
+    liveCommentFunction()
   }
   if (
     sender.id === chrome.runtime.id &&
@@ -262,49 +375,60 @@ const contentMessageListener = async (message: ChromeMessage, sender: chrome.run
       }
       
       const currentFrameData = (htmlVideoPlayer: any): FrameDataOut | undefined => {
-        const currentTime = htmlVideoPlayer.currentTime
-        const duration = htmlVideoPlayer.duration
         const disparityTolerance = 1/duration
     
         const voonFrameDuration = 1/fileSnippet!.fps
         
-        let currentFrameData = fileSnippet!.frameData.find((fd: FrameDataOut) => {
-            if (Math.abs(currentTime-(voonFrameDuration*fd.frame)) <= 0.5) {
+        const absoluteTimeDifference = (frame: number) => {
+          return Math.abs(currentTime-(voonFrameDuration*frame))
+        }
+
+        let currentFrameData = fileSnippet!.frameData.filter((fd: FrameDataOut) => {
+            if (absoluteTimeDifference(fd.frame) <= 10) {
               return true
             } else {
               return false
             }
         })
-    
-        return currentFrameData
+
+        const orderedComments = currentFrameData.sort((a, b) => {
+          return absoluteTimeDifference(a.frame) - absoluteTimeDifference(b.frame)
+        })
+
+        if (orderedComments.length > 0) {
+          return orderedComments[0]
+        } else {
+          return undefined
+        }
       }
       
       // runs every equidistant amt of time
       let frameDataShowing: number | undefined
       fileSnippetFunction = () => {
+        
         const videoPlayer: any = document.getElementById('movie_player')
         const htmlVideoPlayer: any = document.getElementsByTagName('video')[0]
         
         if (videoPlayer){
           const currentFD = currentFrameData(htmlVideoPlayer)
           const currentFrame = currentFD ? currentFD.frame : undefined
-          const overlayShowing = !videoPlayer.classList.contains('ytp-autohide')
           // if (currentFrame !== frameDataShowing) {
             // console.log('Changed frameData to frame: ', currentFrame);
             
             code.style.display = 'none'
-            // clearGB()
+            fileSnippetContainer!.innerHTML = ''
+            
             
             if (currentFD) {
-              greenBox.appendChild(code)
-    
+              fileSnippetContainer!.appendChild(code)
+              
               for (const fileInFrame of currentFD.fileInFrames) {
                 const btn = document.createElement('div')
                 const relFiF = relativeFiF(fileInFrame)
                 btn.className = 'codeSnippetBtn'
                 btn.style.cssText = fileSnippetBtnStyle(relFiF)
                 
-                greenBox.appendChild(btn)
+                fileSnippetContainer!.appendChild(btn)
         
                 const snippetURL = 'https://voon-snippet.herokuapp.com/' + fileSnippet!.githubURL + '/blob/master/' + fileInFrame.fileURL
                 fileBtn(btn, snippetURL, code, relFiF)
@@ -312,9 +436,9 @@ const contentMessageListener = async (message: ChromeMessage, sender: chrome.run
             }
             frameDataShowing = currentFrame
           if (overlayShowing) {
-            greenBox.style.cssText = greenBoxStyle(screenWidth, screenHeight) + SHOW
+            fileSnippetContainer!.style.cssText = fileSnippetContainer!.style.cssText + SHOW
           } else {
-            greenBox.style.cssText = greenBoxStyle(screenWidth, screenHeight) + HIDDEN
+            fileSnippetContainer!.style.cssText = fileSnippetContainer!.style.cssText + HIDDEN
           }
         }
       }

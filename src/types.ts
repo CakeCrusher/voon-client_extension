@@ -24,7 +24,7 @@ export interface ChromeMessage {
 export type LiveCommentOut = {
     comment: string,
     user: string,
-    frame: number,
+    time: number,
     replies?: ReplyOut[]
 }
 type ReplyOut = {

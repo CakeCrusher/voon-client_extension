@@ -88,7 +88,7 @@ const onUpdatedListener = (tabId: number, changeInfo: chrome.tabs.TabChangeInfo,
     setTimeout(() => {
       sendFileSnippetIfAvailable(tabId, tab.url!);
       sendLiveCommentIfAvailable(tabId, tab.url!);
-    }, 500);
+    }, 100);
   }
 }
 chrome.tabs.onUpdated.addListener(onUpdatedListener)

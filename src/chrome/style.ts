@@ -22,25 +22,24 @@ export const BASE_STYLE = `
         initial-value: 0deg;
         inherits: false;
     }
-    #blueBox {
-        width: 100%;
-        height: 100%;
-        background-color: rgb(0, 0, 255);
+    .fileSnippetContainer {
+        position: relative;
+        bottom:0;
     }
     .liveCommentsContainer {
         position: absolute;
-        left: 0;
-        bottom: 0;
+        right: 0;
+        top: 0;
         padding: 10px;
         overflow-y: hidden;
+        z-index: 11;
     }
     .commentContainer {
         position: relative;
         max-width: 100%;
         background-color: white;
         border-radius: 2px;
-        padding: 3px;
-        z-index: 11;
+        padding: 3px 5px;
     }
     .commentHead {
         font-size: 14px;
@@ -114,7 +113,7 @@ export const redBoxStyle = (screenHeight: string) => `
 `
 
 export const greenBoxStyle = (screenWidth: string, screenHeight: string) => `
-    position:relative;
+    position: relative;
     bottom:0;
     height:${screenHeight};
     width:${screenWidth};
