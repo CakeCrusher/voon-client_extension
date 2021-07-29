@@ -59,8 +59,27 @@ const FileSnippetContent: FunctionComponent<FileSnippetContentType> = ({fileSnip
         setLoadingProgress(0);
         setLoading(false);
       }
+      if (
+        sender.id === chrome.runtime.id &&
+        message.from === Sender.Content &&
+        message.message === Message.HAS_FILESNIPPET
+      ) {
+        setGenerated(true)
+      }
     }
-    // chrome.runtime.onMessage.addListener(onMessageListener)
+    chrome.runtime.onMessage.addListener(onMessageListener)
+
+    const queryInfo: chrome.tabs.QueryInfo = {active: true,currentWindow: true}
+    chrome.tabs && chrome.tabs.query(queryInfo, tabs => {
+      const message: ChromeMessage = {
+        from: Sender.React,
+        message: Message.HAS_FILESNIPPET
+      }
+      chrome.tabs.sendMessage(
+        tabs[0].id!,
+        message
+      );
+    })
   }, [])
 
   const createFileSnippet = async() => {
@@ -95,7 +114,6 @@ const FileSnippetContent: FunctionComponent<FileSnippetContentType> = ({fileSnip
           url: tabs[0].url!
         },
         payload: {fps}
-        // message: Message.CREATE_FILESNIPPET,
       }; 
 
       chrome.runtime.sendMessage(
@@ -120,7 +138,6 @@ const FileSnippetContent: FunctionComponent<FileSnippetContentType> = ({fileSnip
           id: tabs[0].id!,
           url: tabs[0].url!
         }
-        // message: Message.CREATE_FILESNIPPET,
       }; 
 
       chrome.runtime.sendMessage(
@@ -133,16 +150,13 @@ const FileSnippetContent: FunctionComponent<FileSnippetContentType> = ({fileSnip
 
   const generatingInfo = loading ? <Text>Generating: <strong>{loadingProgress}%</strong></Text> : <Text>Generate File Snippet</Text>
 
-  const ActivateFileSnippet = (
-    <>
-      <Button onClick={activateFileSnippet} marginLeft="20px" colorScheme="green">Activate File Snippet</Button>
-    </>
+  const FileSnippetActivated  = () => (
+    <Flex direction="row" justify="start" align="center" className="appContent">
+      <Text paddingRight="5px">File Snippet activated and running</Text>
+    </Flex>
   )
-
-  const activateButton = generated && ActivateFileSnippet
-
-  return (
-    <Flex h="40px" direction="row">
+  const CreateFileSnippet = () => (
+    <>
       <Flex direction="row" justify="start" align="center" className="appContent">
         <Text paddingRight="5px">FPS: </Text>
         <Input value={fps} onChange={(e) => setFPS(parseInt(e.target.value))} className="appInput" placeholder="30" type="number" size="xs" w="30px" />
@@ -150,6 +164,13 @@ const FileSnippetContent: FunctionComponent<FileSnippetContentType> = ({fileSnip
       <Button onClick={createFileSnippet} type="submit" isLoading={loading} loadingText={loadingProgress+"%"} opacity="1" className="generateBtn" colorScheme="teal" borderTopLeftRadius="0" borderBottomLeftRadius="0">
         {generatingInfo}
       </Button>
+    </>
+  )
+
+  const activateButton = generated ? <FileSnippetActivated /> : <CreateFileSnippet />
+
+  return (
+    <Flex h="40px" direction="row">
       {activateButton}
     </Flex>
   )

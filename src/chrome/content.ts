@@ -237,7 +237,6 @@ const onStorageChange = async (changes: any, namespace: any) => {
   }
   if (keysChanged.includes('liveComment')) {
     liveCommentState = changes.liveComment.newValue
-    console.log('new LiveCommentState: ', liveCommentState);
     
     if (changes.liveComment.newValue.state !== changes.liveComment.oldValue.state) {
       // when liveComment activation changes
@@ -265,6 +264,27 @@ chrome.storage.onChanged.addListener(onStorageChange)
 // content message listener function
 const contentMessageListener = async (message: ChromeMessage, sender: chrome.runtime.MessageSender) => {
   console.log('Message recieved: ', message);
+  if (
+    sender.id === chrome.runtime.id &&
+    message.from === Sender.React &&
+    message.message === Message.HAS_FILESNIPPET
+  ) {
+    if (fileSnippet) {
+      console.log(`fileSnippet already exists`);
+      
+      const message: ChromeMessage = {
+        from: Sender.Content,
+        message: Message.HAS_FILESNIPPET
+      }; 
+      chrome.runtime.sendMessage(
+        message
+      );
+    } else {
+      console.log(`fileSnippet does not exist`);
+      
+    }
+
+  }
   if (
     sender.id === chrome.runtime.id &&
     message.from === Sender.Background &&

@@ -39,8 +39,7 @@
 /* Apps */
 .appContent {
   background-color: rgba(23,26,34,0.5);
-  border-top-left-radius: 5px;
-  border-bottom-left-radius: 5px;
+  border-radius: 5px;
   padding: 0px 20px;
 }
 .appInput {

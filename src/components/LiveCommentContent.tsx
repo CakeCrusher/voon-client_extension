@@ -55,7 +55,7 @@ const LiveCommentContent: FunctionComponent<LiveCommentContentProps> = ({liveCom
 
   return ( 
     <Flex h="40px" direction="row">
-      <Flex direction="row" justify="start" align="center" className="appContent" borderTopRightRadius="5px" borderBottomRightRadius="5px">
+      <Flex direction="row" justify="start" align="center" className="appContent">
         <Checkbox marginRight="30px" isChecked={liveComment.lowVisibility} onChange={() => onLowVisibilityChange()}>Low visibility</Checkbox>
         <Checkbox isChecked={showReplies} onChange={(e) => setShowReplies(e.target.checked)}>Show replies</Checkbox>
       </Flex>

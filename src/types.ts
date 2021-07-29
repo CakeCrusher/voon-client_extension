@@ -6,6 +6,7 @@ export enum Sender {
 
 export enum Message {
     CREATE_FILESNIPPET = 'create file snippet',
+    HAS_FILESNIPPET = 'has file snippet',
     ACTIVATE_FILESNIPPET = 'activate file snippet',
     REQUEST_FILESNIPPET = 'request file snippet',
     FINISHED_FILESNIPPET = 'finished file snippet',
@@ -92,4 +93,8 @@ export type FileSnippet = {
 export type LiveComment = {
     state: boolean;
     lowVisibility: boolean;
+}
+
+export type LiveCommentIn = {
+    videoId: String
 }

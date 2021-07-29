@@ -1,16 +1,6 @@
-import { ChromeMessage, FileSnippet, LiveComment, Message, Sender } from "../types";
-import { fetchGraphQL, wait } from "../helperFunctions";
+import { ChromeMessage, FileSnippet, LiveComment, LiveCommentIn, Message, Sender } from "../types";
+import { fetchGraphQL, fetchLiveComments, wait } from "../helperFunctions";
 import { GET_VIDEO_FILESNIPPET, GET_VIDEO_LIVECOMMENT } from "../schemas";
-
-// // Initiate storage variables in a chrome extension
-// console.log(`Initiating storage variables in a chrome extension`);
-
-// const fileSnippet: FileSnippet = {state: true}
-// chrome.storage.sync.set({fileSnippet});
-// const liveComment: LiveComment = {state: false, lowVisibility: false}
-// chrome.storage.sync.set({liveComment});
-
-
 
 const initiateEnvironmentIfPossible = async (tabId: number, url: string) => {
   if (url?.includes('www.youtube.com')) {
@@ -54,12 +44,20 @@ const sendFileSnippetIfAvailable = async (tabId: number, url: string) => {
 }
 
 const sendLiveCommentIfAvailable = async (tabId: number, url: string) => {
+  console.log('attempting to send liveComment');
+  
+
   if (url?.includes('www.youtube.com')) {
     const videoId = url.includes('v=') ? url.split('v=')[1] : url.split('/')[4];
-    const variables = {videoId};
-    const getLiveComment = await fetchGraphQL(GET_VIDEO_LIVECOMMENT, variables);
-    const liveComments = getLiveComment.data.video_by_pk ? getLiveComment.data.video_by_pk.liveComments : null;
+    const variables: LiveCommentIn = {videoId};
+    // const getLiveComment = await fetchGraphQL(GET_VIDEO_LIVECOMMENT, variables);
+    // const liveComments = getLiveComment.data.video_by_pk ? getLiveComment.data.video_by_pk.liveComments : null;
+    const getLiveComment = await fetchLiveComments(variables)
+    const liveComments = getLiveComment.liveComments
+
     if (liveComments) {
+      console.log('Sending live comments');
+      
       const message: ChromeMessage = {
         from: Sender.Background,
         message: Message.ACTIVATE_LIVECOMMENT,

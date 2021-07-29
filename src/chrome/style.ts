@@ -38,6 +38,7 @@ export const BASE_STYLE = `
         position: relative;
         max-width: 100%;
         background-color: white;
+        margin-bottom: 10px;
         border-radius: 2px;
         padding: 3px 5px;
     }
