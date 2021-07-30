@@ -26,8 +26,9 @@ import '../App.css';
 
 import {BsFileEarmarkCode} from "react-icons/bs"
 import {AiOutlineComment} from "react-icons/ai"
-import { wait } from "../helperFunctions";
-import { ChromeMessage, FileSnippet, Message, Sender } from "../types";
+import { fetchGraphQL, postNewFileSnippet, wait } from "../helperFunctions";
+import { CREATE_FILESNIPPET, SAVE_FILESNIPPET } from "../schemas"
+import { ChromeMessage, FileSnippet, makeFileSnippetIn, Message, Sender } from "../types";
 
 type FileSnippetContentType = {
   fileSnippet: FileSnippet;
@@ -36,10 +37,13 @@ type FileSnippetContentType = {
 }
 
 const FileSnippetContent: FunctionComponent<FileSnippetContentType> = ({fileSnippet, setFileSnippet, children}) => {
+  const [url, setUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
-  const [fps, setFPS] = useState(30);
+  const [fps, setFPS] = useState(1);
   const [generated, setGenerated] = useState(false);
+
+  const [videoDuration, setVideoDuration] = useState(0);
 
   useEffect(() => {
     const onMessageListener = async (message: ChromeMessage, sender: chrome.runtime.MessageSender) => {
@@ -51,13 +55,13 @@ const FileSnippetContent: FunctionComponent<FileSnippetContentType> = ({fileSnip
         message.message === Message.CREATE_FILESNIPPET
       ) {
         console.log('Finished creating fileSnippet');
-        setGenerated(true)
-        // stops all timeouts and intervals
-        const killId = window.setTimeout(function() {
-          for (var i = killId; i > 0; i--) clearInterval(i)
-        }, 1);
-        setLoadingProgress(0);
-        setLoading(false);
+        // setGenerated(true)
+        // // stops all timeouts and intervals
+        // const killId = window.setTimeout(function() {
+        //   for (var i = killId; i > 0; i--) clearInterval(i)
+        // }, 1);
+        // setLoadingProgress(0);
+        // setLoading(false);
       }
       if (
         sender.id === chrome.runtime.id &&
@@ -66,56 +70,91 @@ const FileSnippetContent: FunctionComponent<FileSnippetContentType> = ({fileSnip
       ) {
         setGenerated(true)
       }
+      if (
+        sender.id === chrome.runtime.id &&
+        message.from === Sender.Content &&
+        message.message === Message.VIDEODETAILS
+      ) {
+        setVideoDuration(message.payload.duration)
+      }
     }
     chrome.runtime.onMessage.addListener(onMessageListener)
 
     const queryInfo: chrome.tabs.QueryInfo = {active: true,currentWindow: true}
     chrome.tabs && chrome.tabs.query(queryInfo, tabs => {
-      const message: ChromeMessage = {
+      setUrl(tabs[0]!.url!)
+      const messageToCheckFileSnippet: ChromeMessage = {
         from: Sender.React,
         message: Message.HAS_FILESNIPPET
       }
       chrome.tabs.sendMessage(
         tabs[0].id!,
-        message
+        messageToCheckFileSnippet
+      );
+      console.log('Sent request to check if there is fileSnippet');
+      
+
+      const messageToRequestVideodetails: ChromeMessage = {
+        from: Sender.React,
+        message: Message.VIDEODETAILS
+      }
+      chrome.tabs.sendMessage(
+        tabs[0].id!,
+        messageToRequestVideodetails
       );
     })
   }, [])
 
   const createFileSnippet = async() => {
     console.log('Requesting creation of fileSnippet to background due to Button press');
+    setLoading(true);
 
-
-    const expectedWait = fps * 2
+    const expectedWait = (fps * 9) * videoDuration;
     const startTime = Date.now();
     // create a set instance that runs every second for 10 seconds
     const interval = setInterval(() => {
       const timeNow = Date.now();
       const timeElapsed = Math.round((timeNow - startTime) / 1000)
-      console.log(timeElapsed);
-      setLoadingProgress(Math.round((timeElapsed / expectedWait) * 100));
+      let tempLoadingProgress = Math.round((timeElapsed / expectedWait) * 100)
+      if (tempLoadingProgress > 99) {
+        tempLoadingProgress = 99
+      }
+      setLoadingProgress(tempLoadingProgress);
+    }, 500);
+    console.log('url', url);
+    console.log('fps', fps);
+    const createFileSnippetVariables: makeFileSnippetIn = {
+      url,
+      per_frame: fps
+    }
+    const madeFileSnippet = await postNewFileSnippet(createFileSnippetVariables)
+    // const madeFileSnippet = fetchGraphQL(CREATE_FILESNIPPET, createFileSnippetVariables)
+    // await wait(expectedWait*1000)
+    console.log('madeFileSnippet', madeFileSnippet);
+    const saveFileSnippet = await fetchGraphQL(SAVE_FILESNIPPET, madeFileSnippet)
+    
+    
+    setLoadingProgress(100)
+    setTimeout(() => {
+      setGenerated(true)
+      setLoading(false);
+      clearInterval(interval)
+      setLoadingProgress(0);
     }, 500);
 
 
-    setLoading(true);
 
-
-    const queryInfo: chrome.tabs.QueryInfo = {
-      active: true,
-      currentWindow: true
-    }
-
+    const queryInfo: chrome.tabs.QueryInfo = {active: true,currentWindow: true}
+    console.log('Requesting activation of fileSnippet to background');
     chrome.tabs && chrome.tabs.query(queryInfo, tabs => {
       const message: ChromeMessage = {
         from: Sender.React,
-        message: Message.CREATE_FILESNIPPET,
+        message: Message.REQUEST_FILESNIPPET,
         tab: {
           id: tabs[0].id!,
           url: tabs[0].url!
-        },
-        payload: {fps}
+        }
       }; 
-
       chrome.runtime.sendMessage(
         message
       );
@@ -157,7 +196,7 @@ const FileSnippetContent: FunctionComponent<FileSnippetContentType> = ({fileSnip
   )
   const CreateFileSnippet = () => (
     <>
-      <Flex direction="row" justify="start" align="center" className="appContent">
+      <Flex direction="row" justify="start" align="center" className="appContent"  borderTopRightRadius="0px" borderBottomRightRadius="0px">
         <Text paddingRight="5px">FPS: </Text>
         <Input value={fps} onChange={(e) => setFPS(parseInt(e.target.value))} className="appInput" placeholder="30" type="number" size="xs" w="30px" />
       </Flex>

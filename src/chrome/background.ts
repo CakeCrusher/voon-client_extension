@@ -78,7 +78,16 @@ const sendLiveCommentIfAvailable = async (tabId: number, url: string) => {
 
 const onUpdatedListener = (tabId: number, changeInfo: chrome.tabs.TabChangeInfo, tab: chrome.tabs.Tab) => {
   console.log('change info: ', changeInfo);
-  
+  if (changeInfo.status === 'loading', changeInfo.url) {
+    const message: ChromeMessage = {
+      from: Sender.Background,
+      message: Message.RESET_CONTENT
+    }
+    chrome.tabs.sendMessage(
+      tabId,
+      message
+    ); 
+  }
   if (tab.url && changeInfo.status === "complete") {
     console.log('Sending file snippet to tab as requested by Updated Tab');
     

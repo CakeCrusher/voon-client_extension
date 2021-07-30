@@ -13,6 +13,8 @@ export enum Message {
     ACTIVATE_LIVECOMMENT = 'activate live comment',
     CHANGE_LIVECOMMENT_VISIBILITY = 'change live comment visibility',
     INITIATE_ENVIRONMENT = 'initiate environment',
+    VIDEODETAILS = 'video details',
+    RESET_CONTENT = 'reset content',
 }
 
 export interface ChromeMessage {
@@ -40,13 +42,11 @@ export type Tab = {
 
 export type MessageResponse = (response?: any) => void
 
-export type MakeFileSnippetIn = {
-    videoId: String
-    githubURL: String
-    fps: number
-    dimensions: Shape
-    payload: FrameData[]
+export type makeFileSnippetIn = {
+    url : String
+    per_frame : number
 }
+
 type Shape = {
     x: number
     y: number

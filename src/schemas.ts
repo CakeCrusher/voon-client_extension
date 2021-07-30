@@ -21,8 +21,20 @@ query MyQuery($videoId: String!) {
 }
 `
 // it is created in video processing not as a schema from client
-const CREATE_FILESNIPPET: String = `
+export const CREATE_FILESNIPPET: String = `
+mutation MyMutation($fps: Int!, $url: String!) {
+  makeFileSnippet(fps: $fps, url: $url) {
+    videoId
+  }
+}
+`
 
+export const SAVE_FILESNIPPET: String = `
+mutation MyMutation($dimensions: Shape!, $fps: Int!, $githubURL: String!, $payload: [FrameData!]!, $videoId: String!) {
+  makeFileSnippet(dimensions: $dimensions, fps: $fps, githubURL: $githubURL, videoId: $videoId, payload: $payload) {
+    videoId
+  }
+}
 `
 
 export const CREATE_LIVECOMMENT: String = `

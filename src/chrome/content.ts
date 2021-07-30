@@ -14,29 +14,29 @@ import {
 import { type } from "os";
 
 // fundimentals
-let videoId: string
-let screen: HTMLElement
-let screenHeight: string
-let screenWidth: string
-let videoPlayer: any
-let overlayShowing: boolean
-let htmlVideoPlayer: any
-let currentTime: number
-let duration: number
-let redBox: HTMLElement
-let greenBox: HTMLElement
+let videoId: string | undefined
+let screen: HTMLElement | undefined
+let screenHeight: string | undefined
+let screenWidth: string | undefined
+let videoPlayer: any | undefined
+let overlayShowing: boolean | undefined
+let htmlVideoPlayer: any | undefined
+let currentTime: number | undefined
+let duration: number | undefined
+let redBox: HTMLElement | undefined
+let greenBox: HTMLElement | undefined
 
 // FileSnippet
-let relativeFiF: Function
-let fileSnippet: FileSnippetOut | undefined
+let relativeFiF: Function | undefined
+let fileSnippet: FileSnippetOut
 let fileSnippetContainer: HTMLElement | undefined
-let fileSnippetFunction: Function
-let fileSnippetState: FileSnippet
+let fileSnippetFunction: Function | undefined
+let fileSnippetState: FileSnippet | undefined
 
 // LiveComment
 let liveCommentsContainer: HTMLElement | undefined
 let liveComments: LiveCommentOut[] | undefined
-let liveCommentState: LiveComment
+let liveCommentState: LiveComment | undefined
 
 // const readComments = () => {
 //   let commentThreads = document.querySelectorAll('ytd-comment-thread-renderer')
@@ -92,7 +92,7 @@ const clock = () => {
       liveCommentsContainer.style.cssText = `width: ${Math.round(parseInt(screenWidth)/3)}px; max-height: ${screenHeight};`
     }
 
-    redBox.style.cssText = redBoxStyle(screenHeight)
+    redBox!.style.cssText = redBoxStyle(screenHeight)
     overlayShowing = !videoPlayer.classList.contains('ytp-autohide')
     if (overlayShowing) {
       greenBox!.style.cssText = greenBoxStyle(screenWidth, screenHeight) + SHOW
@@ -103,10 +103,12 @@ const clock = () => {
     currentTime = htmlVideoPlayer.currentTime
     duration = htmlVideoPlayer.duration
   }
-  if (liveComments && liveCommentState.state) {
+  if (liveComments && liveCommentState!.state) {
     liveCommentFunction()
   }
-  if (fileSnippet && fileSnippetState.state) {
+  console.log(`fileSnippet: ${fileSnippet}, state: ${fileSnippetState!.state}, function: ${Boolean(fileSnippetFunction)}`);
+  
+  if (fileSnippet && fileSnippetState!.state && fileSnippetFunction !== undefined) {
     fileSnippetFunction()
   }
 }
@@ -117,7 +119,7 @@ const liveCommentFunction = async () => {
 
   const commentFilterByTime = () => {
     const filteredComments = liveComments!.filter(comment => {
-      if (Math.abs(comment.time - currentTime) < 1) {
+      if (Math.abs(comment.time - currentTime!) < 1) {
         return true
       } else {
         return false
@@ -135,7 +137,7 @@ const liveCommentFunction = async () => {
   for (const comment of relevantComments) {
     let commentContainer = document.createElement('div')
     commentContainer.className = 'commentContainer'
-    if (liveCommentState.lowVisibility) {
+    if (liveCommentState!.lowVisibility) {
       commentContainer.style.cssText = `opacity: 0.5;`
     }
 
@@ -196,7 +198,7 @@ const initiateFileSnippetContainer = () => {
 const initiateLiveCommentsContainer = () => {
   liveCommentsContainer = document.createElement('div')
   liveCommentsContainer.className = 'liveCommentsContainer'
-  liveCommentsContainer.style.cssText = `width: ${Math.round(parseInt(screenWidth)/3)}px; height: ${screenHeight};`
+  liveCommentsContainer.style.cssText = `width: ${Math.round(parseInt(screenWidth!)/3)}px; height: ${screenHeight};`
   greenBox!.appendChild(liveCommentsContainer)
 }
 
@@ -267,6 +269,36 @@ const contentMessageListener = async (message: ChromeMessage, sender: chrome.run
   if (
     sender.id === chrome.runtime.id &&
     message.from === Sender.React &&
+    message.message === Message.RESET_CONTENT
+  ) {
+    console.log(`Resetting content`);
+    
+    if (greenBox !== undefined) {
+      greenBox.innerHTML = ''
+    }
+    videoId = undefined
+    screen = undefined
+    screenHeight = undefined
+    screenWidth = undefined
+    videoPlayer = undefined
+    overlayShowing = undefined
+    htmlVideoPlayer = undefined
+    currentTime = undefined
+    duration = undefined
+    redBox = undefined
+    greenBox = undefined
+    // FileSnippet
+    relativeFiF = undefined
+    fileSnippetContainer = undefined
+    // fileSnippetFunction = undefined
+
+    // LiveComment
+    liveCommentsContainer = undefined
+    liveComments = undefined
+  }
+  if (
+    sender.id === chrome.runtime.id &&
+    message.from === Sender.React &&
     message.message === Message.HAS_FILESNIPPET
   ) {
     if (fileSnippet) {
@@ -290,7 +322,6 @@ const contentMessageListener = async (message: ChromeMessage, sender: chrome.run
     message.from === Sender.Background &&
     message.message === Message.INITIATE_ENVIRONMENT
   ) {
-    fileSnippet = undefined
     console.log('Injecting css');
     
     // create a style element and append it to the head of the document
@@ -322,13 +353,13 @@ const contentMessageListener = async (message: ChromeMessage, sender: chrome.run
     chrome.storage.sync.get(['fileSnippet', 'liveComment'], (res) => {
       if (res.fileSnippet) {
         fileSnippetState = res.fileSnippet
-        if (fileSnippetState.state) {
+        if (fileSnippetState!.state) {
           initiateFileSnippetContainer()
         }
       }
       if (res.liveComment) {
         liveCommentState = res.liveComment
-        if (liveCommentState.state) {
+        if (liveCommentState!.state) {
           initiateLiveCommentsContainer()
         }
       }
@@ -336,6 +367,23 @@ const contentMessageListener = async (message: ChromeMessage, sender: chrome.run
 
     redBox.appendChild(greenBox!)
     screen.parentElement?.parentElement?.appendChild(redBox)
+  }
+  if (
+    sender.id === chrome.runtime.id &&
+    message.from === Sender.React &&
+    message.message === Message.VIDEODETAILS
+  ) {
+    const message: ChromeMessage = {
+      from: Sender.Content,
+      message: Message.VIDEODETAILS,
+      payload: {
+        duration,
+        currentTime
+      }
+    }; 
+    chrome.runtime.sendMessage(
+      message
+    );
   }
   if (
     sender.id === chrome.runtime.id &&
@@ -348,7 +396,7 @@ const contentMessageListener = async (message: ChromeMessage, sender: chrome.run
   }
   if (
     sender.id === chrome.runtime.id &&
-    message.from === Sender.Background &&
+    message.from === Sender.Background || message.from === Sender.React &&
     message.message === Message.ACTIVATE_FILESNIPPET
   ) {
     console.log('Activating file snippet');
@@ -357,8 +405,8 @@ const contentMessageListener = async (message: ChromeMessage, sender: chrome.run
       console.log("File Snippet: ", fileSnippet);
       relativeFiF = (fileInFrame: DataInFrame): DataInFrame => {
         
-        const xRatio = parseInt(screenWidth) / fileSnippet!.width
-        const yRatio = parseInt(screenHeight) / fileSnippet!.height
+        const xRatio = parseInt(screenWidth!) / fileSnippet!.width
+        const yRatio = parseInt(screenHeight!) / fileSnippet!.height
         const newFileInFrame = {...fileInFrame}
         newFileInFrame['x'] = Math.round(fileInFrame.x*xRatio)
         newFileInFrame['width'] = Math.round(fileInFrame.width*xRatio)
@@ -372,7 +420,7 @@ const contentMessageListener = async (message: ChromeMessage, sender: chrome.run
       
       const fileBtn = (ele: HTMLElement, url: string, codeFrame: HTMLIFrameElement, relFiF: any) => {
         const centerFiF =  relFiF.x + (relFiF.width/2)
-        let isFiFRightMost = centerFiF > (parseInt(screenWidth)/2) ? true : false
+        let isFiFRightMost = centerFiF > (parseInt(screenWidth!)/2) ? true : false
         ele.addEventListener('click', () => {
           console.log('FiF: ', relFiF);
           console.log('RightMost: ', isFiFRightMost);
@@ -386,21 +434,21 @@ const contentMessageListener = async (message: ChromeMessage, sender: chrome.run
           codeFrame.src = url
     
           if (isFiFRightMost) {
-            code.style.cssText = codeSnippetRMStyle(currentDisplay, relFiF, screenHeight)
+            code.style.cssText = codeSnippetRMStyle(currentDisplay, relFiF, screenHeight!)
           } else {
             const endFiF = relFiF.x+relFiF.width
-            code.style.cssText = codeSnippetLMStyle(currentDisplay, relFiF, screenWidth, screenHeight)
+            code.style.cssText = codeSnippetLMStyle(currentDisplay, relFiF, screenWidth!, screenHeight!)
           }
         })
       }
       
       const currentFrameData = (htmlVideoPlayer: any): FrameDataOut | undefined => {
-        const disparityTolerance = 1/duration
+        const disparityTolerance = 1/duration!
     
         const voonFrameDuration = 1/fileSnippet!.fps
         
         const absoluteTimeDifference = (frame: number) => {
-          return Math.abs(currentTime-(voonFrameDuration*frame))
+          return Math.abs(currentTime!-(voonFrameDuration*frame))
         }
 
         let currentFrameData = fileSnippet!.frameData.filter((fd: FrameDataOut) => {
@@ -425,6 +473,7 @@ const contentMessageListener = async (message: ChromeMessage, sender: chrome.run
       // runs every equidistant amt of time
       let frameDataShowing: number | undefined
       fileSnippetFunction = () => {
+        console.log('Ran FSF');
         
         const videoPlayer: any = document.getElementById('movie_player')
         const htmlVideoPlayer: any = document.getElementsByTagName('video')[0]
@@ -444,7 +493,10 @@ const contentMessageListener = async (message: ChromeMessage, sender: chrome.run
               
               for (const fileInFrame of currentFD.fileInFrames) {
                 const btn = document.createElement('div')
-                const relFiF = relativeFiF(fileInFrame)
+                let relFiF
+                if (relativeFiF !== undefined) {
+                  relFiF = relativeFiF(fileInFrame)
+                }
                 btn.className = 'codeSnippetBtn'
                 btn.style.cssText = fileSnippetBtnStyle(relFiF)
                 
@@ -463,6 +515,8 @@ const contentMessageListener = async (message: ChromeMessage, sender: chrome.run
         }
       }
     }
+    console.log('fileSnippet at the end: ', fileSnippet);
+    
   }
   // if (
   //   sender.id === chrome.runtime.id &&
