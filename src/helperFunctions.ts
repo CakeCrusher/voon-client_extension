@@ -29,7 +29,7 @@ export const postNewFileSnippet = async (createFileSnippetVariables: makeFileSni
         },
         body: JSON.stringify(createFileSnippetVariables),
     };
-    const database_url = 'https://8ea76c59422b.ngrok.io/text-data'
+    const database_url = 'https://516309ab6bac.ngrok.io/text-data'
     const res = await fetch(database_url, requestOptions).then((res:any) => res.json())
     return res
 }
@@ -37,18 +37,18 @@ export const postNewFileSnippet = async (createFileSnippetVariables: makeFileSni
 export const fetchLiveComments = async (variables: LiveCommentIn) => {
     console.log('fetchingLiveComments');
     
-    // var requestOptions = {
-    //     method: 'GET',
-    //     headers: {
-    //         'content-type': 'application/json',
-    //     }
-    // };
+    var requestOptions = {
+        method: 'GET',
+        headers: {
+            'content-type': 'application/json',
+        }
+    };
 
-    // const requestURL = `https://74d174224478.ngrok.io/liveComments?videoId=${variables.videoId}`
-    // const res = await fetch(requestURL, requestOptions).then((res: Response) => res.json())
+    const requestURL = `https://b3d25a71d1c5.ngrok.io/liveComments?videoId=${variables.videoId}`
+    const res = await fetch(requestURL, requestOptions).then((res: Response) => res.json())
     
-    await wait(500)
-    const res = liveCommentsResult
+    // await wait(500)
+    // const res = liveCommentsResult
     
     return res
 }

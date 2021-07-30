@@ -121,15 +121,11 @@ const FileSnippetContent: FunctionComponent<FileSnippetContentType> = ({fileSnip
       }
       setLoadingProgress(tempLoadingProgress);
     }, 500);
-    console.log('url', url);
-    console.log('fps', fps);
     const createFileSnippetVariables: makeFileSnippetIn = {
       url,
       per_frame: fps
     }
     const madeFileSnippet = await postNewFileSnippet(createFileSnippetVariables)
-    // const madeFileSnippet = fetchGraphQL(CREATE_FILESNIPPET, createFileSnippetVariables)
-    // await wait(expectedWait*1000)
     console.log('madeFileSnippet', madeFileSnippet);
     const saveFileSnippet = await fetchGraphQL(SAVE_FILESNIPPET, madeFileSnippet)
     

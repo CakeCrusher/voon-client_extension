@@ -28,7 +28,7 @@ let greenBox: HTMLElement | undefined
 
 // FileSnippet
 let relativeFiF: Function | undefined
-let fileSnippet: FileSnippetOut
+let fileSnippet: FileSnippetOut | undefined
 let fileSnippetContainer: HTMLElement | undefined
 let fileSnippetFunction: Function | undefined
 let fileSnippetState: FileSnippet | undefined
@@ -37,48 +37,6 @@ let fileSnippetState: FileSnippet | undefined
 let liveCommentsContainer: HTMLElement | undefined
 let liveComments: LiveCommentOut[] | undefined
 let liveCommentState: LiveComment | undefined
-
-// const readComments = () => {
-//   let commentThreads = document.querySelectorAll('ytd-comment-thread-renderer')
-//   let commentThread = commentThreads[1]
-//   let commentBody = commentThread.querySelector("#main")
-//   let replies = commentThread.querySelector("#replies").querySelectorAll("ytd-comment-replies-renderer")
-//   let reply = replies[0]
-//   let replyBody = reply.querySelector("#main")
-//   // works for both comment and reply
-//   let commentHead
-
-//   // scrape comments and replies from youtube dom and store them in a json object
-//   let comments = []
-//   if (commentBody) {
-//     let comment = {
-//       id: commentBody.getAttribute('id'),
-//       author: commentBody.querySelector('ytd-comment-user-renderer').getAttribute('data-ytid'),
-//       authorImage: commentBody.querySelector('ytd-comment-user-renderer').getAttribute('src'),
-//       authorName: commentBody.querySelector('ytd-comment-user-renderer').getAttribute('aria-label'),
-//       authorUrl: commentBody.querySelector('ytd-comment-user-renderer').getAttribute('href'),
-//       text: commentBody.querySelector('ytd-comment-text-renderer').innerHTML,
-//       time: commentBody.querySelector('yt-formatted-string').innerHTML,
-//       replyCount: reply.querySelector('ytd-comment-replies-renderer').getAttribute('aria-label'),
-//       replies: []
-//     }
-//     comments.push(comment)
-//   }
-//   if (replies) {
-//     for (let i = 0; i < replies.length; i++) {
-//       let reply = {
-//         id: replies[i].getAttribute('id'),
-//         author: replies[i].querySelector('ytd-comment-user-renderer').getAttribute('data-ytid'),
-//         authorImage: replies[i].querySelector('ytd-comment-user-renderer').getAttribute('src'),
-//         authorName: replies[i].querySelector('ytd-comment-user-renderer').getAttribute('aria-label'),
-//         authorUrl: replies[i].querySelector('ytd-comment-user-renderer').getAttribute('href'),
-//         text: replies[i].querySelector('ytd-comment-text-renderer').innerHTML,
-//         time: replies[i].querySelector('yt-formatted-string').innerHTML,
-//         replyCount: replies[i].querySelector('ytd-comment-replies-renderer').getAttribute('aria-label'),
-//         replies: []
-//       }
-//       comments[i].replies.push
-// }
 
 const clock = () => {
   if (document.querySelector<HTMLElement>('.video-stream')) {
@@ -92,100 +50,119 @@ const clock = () => {
       liveCommentsContainer.style.cssText = `width: ${Math.round(parseInt(screenWidth)/3)}px; max-height: ${screenHeight};`
     }
 
-    redBox!.style.cssText = redBoxStyle(screenHeight)
-    overlayShowing = !videoPlayer.classList.contains('ytp-autohide')
-    if (overlayShowing) {
-      greenBox!.style.cssText = greenBoxStyle(screenWidth, screenHeight) + SHOW
-    } else {
-      greenBox!.style.cssText = greenBoxStyle(screenWidth, screenHeight) + HIDDEN
+    if (redBox) {
+      redBox.style.cssText = redBoxStyle(screenHeight)
     }
 
-    currentTime = htmlVideoPlayer.currentTime
-    duration = htmlVideoPlayer.duration
+    if (videoPlayer && greenBox) {
+      overlayShowing = !videoPlayer.classList.contains('ytp-autohide')
+      if (overlayShowing) {
+        greenBox.style.cssText = greenBoxStyle(screenWidth, screenHeight) + SHOW
+      } else {
+        greenBox.style.cssText = greenBoxStyle(screenWidth, screenHeight) + HIDDEN
+      }
+    }
+
+    if (htmlVideoPlayer) {
+      currentTime = htmlVideoPlayer.currentTime
+      duration = htmlVideoPlayer.duration
+    }
   }
-  if (liveComments && liveCommentState!.state) {
+  
+  console.log(`liveComments: ${liveComments ? liveComments.length : 0}, state: ${liveCommentState && liveCommentState.state}`);
+  
+  if (liveComments && liveCommentState && liveCommentState.state) {
     liveCommentFunction()
   }
-  console.log(`fileSnippet: ${fileSnippet}, state: ${fileSnippetState!.state}, function: ${Boolean(fileSnippetFunction)}`);
-  
-  if (fileSnippet && fileSnippetState!.state && fileSnippetFunction !== undefined) {
+
+  if (fileSnippet && fileSnippetState && fileSnippetState.state && fileSnippetFunction !== undefined) {
     fileSnippetFunction()
   }
 }
 setInterval(clock, 500)
 
 const liveCommentFunction = async () => { 
-  liveCommentsContainer!.innerHTML = ""
+  if (liveCommentsContainer) {
+    liveCommentsContainer.innerHTML = ""
 
-  const commentFilterByTime = () => {
-    const filteredComments = liveComments!.filter(comment => {
-      if (Math.abs(comment.time - currentTime!) < 1) {
-        return true
-      } else {
-        return false
+    const commentFilterByTime = () => {
+      let orderedComments
+      if (liveComments) {
+        const filteredComments = liveComments.filter(comment => {
+          if (currentTime) {
+            if (Math.abs(comment.time - currentTime) < 1) {
+              return true
+            } else {
+              return false
+            }
+          }
+        })
+        console.log('filteredComments', filteredComments);
+        
+        // order objects by a key in order of smallest to largest
+        orderedComments = filteredComments.sort((a, b) => {
+          return a.time - b.time
+        })
       }
-    })
-    // order objects by a key in order of smallest to largest
-    const orderedComments = filteredComments.sort((a, b) => {
-      return a.time - b.time
-    })
+      orderedComments = orderedComments ? orderedComments : []
+      return orderedComments
+    }
+    const relevantComments = commentFilterByTime()
 
-    return orderedComments
-  }
-  const relevantComments = commentFilterByTime()
+    for (const comment of relevantComments) {
+      let commentContainer = document.createElement('div')
+      commentContainer.className = 'commentContainer'
+      if (liveCommentState && liveCommentState.lowVisibility) {
+        commentContainer.style.cssText = `opacity: 0.5;`
+      }
   
-  for (const comment of relevantComments) {
-    let commentContainer = document.createElement('div')
-    commentContainer.className = 'commentContainer'
-    if (liveCommentState!.lowVisibility) {
-      commentContainer.style.cssText = `opacity: 0.5;`
-    }
-
-    const createComment = (user: string, comment: string, container: HTMLElement, showSpacer: boolean = true) => {
-      let commentHead = document.createElement('div')
-      commentHead.className = 'commentHead'
-      commentHead.innerText = user
-      container.appendChild(commentHead)
-
-      let commentBody = document.createElement('div')
-      commentBody.className = 'commentBody'
-      commentBody.innerText = comment
-      container.appendChild(commentBody)
-
-      if (showSpacer) {
-        let spacer = document.createElement('div')
-        spacer.className = 'spacer'
-        container.appendChild(spacer)
+      const createComment = (user: string, comment: string, container: HTMLElement, showSpacer: boolean = true) => {
+        let commentHead = document.createElement('div')
+        commentHead.className = 'commentHead'
+        commentHead.innerText = user
+        container.appendChild(commentHead)
+  
+        let commentBody = document.createElement('div')
+        commentBody.className = 'commentBody'
+        commentBody.innerText = comment
+        container.appendChild(commentBody)
+  
+        if (showSpacer) {
+          let spacer = document.createElement('div')
+          spacer.className = 'spacer'
+          container.appendChild(spacer)
+        }
+      }
+      const showCommentSpacer = Boolean(comment.replies)
+      createComment(
+        comment.user,
+        comment.comment,
+        commentContainer,
+        showCommentSpacer
+      )
+  
+      if (comment.replies) {
+        let repliesContainer = document.createElement('div')
+        repliesContainer.className = 'repliesContainer'
+  
+        const lastReply = comment.replies[comment.replies.length - 1]
+  
+        for (const reply of comment.replies) {
+          const showReplySpacer = reply.comment !== lastReply.comment
+          createComment(
+            reply.user,
+            reply.comment,
+            repliesContainer,
+            showReplySpacer
+          )
+        }
+  
+        commentContainer.appendChild(repliesContainer)
+      }
+      if (liveCommentsContainer) {
+        liveCommentsContainer.appendChild(commentContainer)
       }
     }
-    const showCommentSpacer = Boolean(comment.replies)
-    createComment(
-      comment.user,
-      comment.comment,
-      commentContainer,
-      showCommentSpacer
-    )
-
-    if (comment.replies) {
-      let repliesContainer = document.createElement('div')
-      repliesContainer.className = 'repliesContainer'
-
-      const lastReply = comment.replies[comment.replies.length - 1]
-
-      for (const reply of comment.replies) {
-        const showReplySpacer = reply.comment !== lastReply.comment
-        createComment(
-          reply.user,
-          reply.comment,
-          repliesContainer,
-          showReplySpacer
-        )
-      }
-
-      commentContainer.appendChild(repliesContainer)
-    }
-
-    liveCommentsContainer!.appendChild(commentContainer)
   }
 }
 
@@ -193,70 +170,79 @@ const initiateFileSnippetContainer = () => {
   fileSnippetContainer = document.createElement('div')
   fileSnippetContainer.className = 'fileSnippetContainer'
   fileSnippetContainer.style.cssText = `width: ${screenWidth}; height: ${screenHeight};`
-  greenBox!.appendChild(fileSnippetContainer)
+  if (greenBox) {
+    greenBox.appendChild(fileSnippetContainer)
+  }
 }
 const initiateLiveCommentsContainer = () => {
   liveCommentsContainer = document.createElement('div')
   liveCommentsContainer.className = 'liveCommentsContainer'
   liveCommentsContainer.style.cssText = `width: ${Math.round(parseInt(screenWidth!)/3)}px; height: ${screenHeight};`
-  greenBox!.appendChild(liveCommentsContainer)
+  if (greenBox) {
+    greenBox.appendChild(liveCommentsContainer)
+  }
 }
 
 
 const onStorageChange = async (changes: any, namespace: any) => {
   const keysChanged = Object.keys(changes);
+  console.log('Storage change: ', changes);
+  
   
   if (keysChanged.includes('fileSnippet')) {
     fileSnippetState = changes.fileSnippet.newValue
-    if (changes.fileSnippet.newValue.state !== changes.fileSnippet.oldValue.state) {
-      // when fileSnippet activation changes
-      if (changes.fileSnippet.newValue.state) {
-        // when fileSnippet is activated
-        initiateFileSnippetContainer()
-        const queryInfo: chrome.tabs.QueryInfo = {
-          active: true,
-          currentWindow: true
+    if (changes.fileSnippet.newValue && changes.fileSnippet.oldValue) {
+      if (changes.fileSnippet.newValue.state !== changes.fileSnippet.oldValue.state) {
+        // when fileSnippet activation changes
+        if (changes.fileSnippet.newValue.state) {
+          // when fileSnippet is activated
+          initiateFileSnippetContainer()
+          const queryInfo: chrome.tabs.QueryInfo = {
+            active: true,
+            currentWindow: true
+          }
+          chrome.tabs && chrome.tabs.query(queryInfo, (tabs: any) => {
+            const message: ChromeMessage = {
+              from: Sender.Content,
+              message: Message.REQUEST_FILESNIPPET,
+              tab: {
+                id: tabs[0].id,
+                url: tabs[0].url
+              },
+            }; 
+            chrome.runtime.sendMessage(
+              message
+            );
+          }) 
         }
-        chrome.tabs && chrome.tabs.query(queryInfo, tabs => {
-          const message: ChromeMessage = {
-            from: Sender.Content,
-            message: Message.REQUEST_FILESNIPPET,
-            tab: {
-              id: tabs[0].id!,
-              url: tabs[0].url!
-            },
-          }; 
-          chrome.runtime.sendMessage(
-            message
-          );
-        }) 
-      }
-      if (!changes.fileSnippet.newValue.state) {
-        fileSnippetContainer!.remove()
-        fileSnippetContainer = undefined
+        if (!changes.fileSnippet.newValue.state && fileSnippetContainer) {
+          fileSnippetContainer.remove()
+          fileSnippetContainer = undefined
+        }
       }
     }
   }
   if (keysChanged.includes('liveComment')) {
     liveCommentState = changes.liveComment.newValue
-    
-    if (changes.liveComment.newValue.state !== changes.liveComment.oldValue.state) {
-      // when liveComment activation changes
-      if (changes.liveComment.newValue.state) {
-        initiateLiveCommentsContainer()
+    if (changes.liveComment.newValue && changes.liveComment.oldValue) {
+      if (changes.liveComment.newValue.state !== changes.liveComment.oldValue.state) {
+        // when liveComment activation changes
+        if (changes.liveComment.newValue.state) {
+          initiateLiveCommentsContainer()
+        }
+        if (!changes.liveComment.newValue.state && liveCommentsContainer) {
+          // when liveComment is deactivated
+          liveCommentsContainer.remove()
+          liveCommentsContainer = undefined
+        }
       }
-      if (!changes.liveComment.newValue.state) {
-        // when liveComment is deactivated
-        liveCommentsContainer!.remove()
-        liveCommentsContainer = undefined
-      }
-    }
-    if (changes.liveComment.newValue.lowVisibility !== changes.liveComment.oldValue.lowVisibility) {
-      // when liveComment activation changes
-      if (changes.liveComment.newValue.lowVisibility) {
-        // when liveComment has low visibility
-      } else {
-          // when liveComment has normal visibility
+      if (changes.liveComment.newValue.lowVisibility !== changes.liveComment.oldValue.lowVisibility) {
+        // when liveComment activation changes
+        if (changes.liveComment.newValue.lowVisibility) {
+          // when liveComment has low visibility
+        } else {
+            // when liveComment has normal visibility
+        }
       }
     }
   }
@@ -268,10 +254,10 @@ const contentMessageListener = async (message: ChromeMessage, sender: chrome.run
   console.log('Message recieved: ', message);
   if (
     sender.id === chrome.runtime.id &&
-    message.from === Sender.React &&
+    message.from === Sender.Background &&
     message.message === Message.RESET_CONTENT
   ) {
-    console.log(`Resetting content`);
+    console.log('Resetting content');
     
     if (greenBox !== undefined) {
       greenBox.innerHTML = ''
@@ -285,14 +271,27 @@ const contentMessageListener = async (message: ChromeMessage, sender: chrome.run
     htmlVideoPlayer = undefined
     currentTime = undefined
     duration = undefined
+    if (redBox) {
+      redBox.remove()
+    }
     redBox = undefined
+    if (greenBox) {
+      greenBox.remove()
+    }
     greenBox = undefined
     // FileSnippet
     relativeFiF = undefined
+    fileSnippet = undefined
+    if (fileSnippetContainer) {
+      fileSnippetContainer.remove()
+    }
     fileSnippetContainer = undefined
-    // fileSnippetFunction = undefined
+    fileSnippetFunction = undefined
 
     // LiveComment
+    if (liveCommentsContainer) {
+      liveCommentsContainer.remove()
+    }
     liveCommentsContainer = undefined
     liveComments = undefined
   }
@@ -333,18 +332,25 @@ const contentMessageListener = async (message: ChromeMessage, sender: chrome.run
     videoId = videoURL.includes('v=') ? videoURL.split('v=')[1].split('&')[0] : videoURL.split('/')[3]
     
     // sets up containers red and green
-    screen = document.querySelector<HTMLElement>('.video-stream')!
-    screenHeight = screen.style.height
-    screenWidth = screen.style.width
+    if (document.querySelector<HTMLElement>('.video-stream')) {
+      screen = document.querySelector<HTMLElement>('.video-stream')!
+    }
+    if (screen) {
+      screenHeight = screen.style.height
+      screenWidth = screen.style.width
+    }
+
     redBox = document.createElement('div')
     redBox.id = 'redBox'
-    redBox.style.cssText = redBoxStyle(screenHeight)
     greenBox = document.createElement('div')
     greenBox.id = 'greenBox'
-    greenBox.style.cssText = greenBoxStyle(screenWidth, screenHeight)
+    if (screenHeight && screenWidth) {
+      redBox.style.cssText = redBoxStyle(screenHeight)
+      greenBox.style.cssText = greenBoxStyle(screenWidth, screenHeight)
+    }
 
     videoPlayer = document.getElementById('movie_player')
-    overlayShowing = videoPlayer.classList.contains('ytp-autohide')
+    overlayShowing = !videoPlayer.classList.contains('ytp-autohide')
 
     htmlVideoPlayer = document.getElementsByTagName('video')[0]
     currentTime = htmlVideoPlayer.currentTime
@@ -353,20 +359,24 @@ const contentMessageListener = async (message: ChromeMessage, sender: chrome.run
     chrome.storage.sync.get(['fileSnippet', 'liveComment'], (res) => {
       if (res.fileSnippet) {
         fileSnippetState = res.fileSnippet
-        if (fileSnippetState!.state) {
+        if (fileSnippetState && fileSnippetState.state) {
           initiateFileSnippetContainer()
         }
       }
       if (res.liveComment) {
         liveCommentState = res.liveComment
-        if (liveCommentState!.state) {
+        if (liveCommentState && liveCommentState.state) {
           initiateLiveCommentsContainer()
         }
       }
     })
 
-    redBox.appendChild(greenBox!)
-    screen.parentElement?.parentElement?.appendChild(redBox)
+    if (greenBox) {
+      redBox.appendChild(greenBox)
+    }
+    if (screen) {
+      screen.parentElement?.parentElement?.appendChild(redBox)
+    }
   }
   if (
     sender.id === chrome.runtime.id &&
@@ -396,23 +406,27 @@ const contentMessageListener = async (message: ChromeMessage, sender: chrome.run
   }
   if (
     sender.id === chrome.runtime.id &&
-    message.from === Sender.Background || message.from === Sender.React &&
+    message.from === Sender.Background &&
     message.message === Message.ACTIVATE_FILESNIPPET
   ) {
     console.log('Activating file snippet');
     fileSnippet = message.payload.fileSnippet
+    console.log('message.payload.fileSnippet: ', message.payload.fileSnippet);
+    
     if (fileSnippet) {
       console.log("File Snippet: ", fileSnippet);
-      relativeFiF = (fileInFrame: DataInFrame): DataInFrame => {
-        
-        const xRatio = parseInt(screenWidth!) / fileSnippet!.width
-        const yRatio = parseInt(screenHeight!) / fileSnippet!.height
-        const newFileInFrame = {...fileInFrame}
-        newFileInFrame['x'] = Math.round(fileInFrame.x*xRatio)
-        newFileInFrame['width'] = Math.round(fileInFrame.width*xRatio)
-        newFileInFrame['y'] = Math.round(fileInFrame.y*yRatio)
-        newFileInFrame['height'] = Math.floor(fileInFrame.height*yRatio)
-        return newFileInFrame
+      relativeFiF = (fileInFrame: DataInFrame): DataInFrame | undefined => {
+        if (screenHeight && screenWidth && fileSnippet) {
+          const xRatio = parseInt(screenWidth) / fileSnippet.width
+          const yRatio = parseInt(screenHeight) / fileSnippet.height
+          const newFileInFrame = {...fileInFrame}
+          newFileInFrame['x'] = Math.round(fileInFrame.x*xRatio)
+          newFileInFrame['width'] = Math.round(fileInFrame.width*xRatio)
+          newFileInFrame['y'] = Math.round(fileInFrame.y*yRatio)
+          newFileInFrame['height'] = Math.floor(fileInFrame.height*yRatio)
+          return newFileInFrame
+        }
+        return undefined
       }
       
       let code = document.createElement('iframe')
@@ -420,7 +434,12 @@ const contentMessageListener = async (message: ChromeMessage, sender: chrome.run
       
       const fileBtn = (ele: HTMLElement, url: string, codeFrame: HTMLIFrameElement, relFiF: any) => {
         const centerFiF =  relFiF.x + (relFiF.width/2)
-        let isFiFRightMost = centerFiF > (parseInt(screenWidth!)/2) ? true : false
+        let isFiFRightMost: Boolean
+        if (screenWidth) {
+          isFiFRightMost = centerFiF > (parseInt(screenWidth)/2) ? true : false
+        } else {
+          isFiFRightMost = true
+        }
         ele.addEventListener('click', () => {
           console.log('FiF: ', relFiF);
           console.log('RightMost: ', isFiFRightMost);
@@ -432,65 +451,67 @@ const contentMessageListener = async (message: ChromeMessage, sender: chrome.run
             currentDisplay = 'block'
           }
           codeFrame.src = url
-    
-          if (isFiFRightMost) {
-            code.style.cssText = codeSnippetRMStyle(currentDisplay, relFiF, screenHeight!)
-          } else {
-            const endFiF = relFiF.x+relFiF.width
-            code.style.cssText = codeSnippetLMStyle(currentDisplay, relFiF, screenWidth!, screenHeight!)
+          
+          if (screenHeight && screenWidth) {
+            if (isFiFRightMost) {
+              code.style.cssText = codeSnippetRMStyle(currentDisplay, relFiF, screenHeight)
+            } else {
+              const endFiF = relFiF.x+relFiF.width
+              code.style.cssText = codeSnippetLMStyle(currentDisplay, endFiF, screenWidth, screenHeight)
+            }
           }
         })
       }
       
       const currentFrameData = (htmlVideoPlayer: any): FrameDataOut | undefined => {
-        const disparityTolerance = 1/duration!
+        if (fileSnippet) {
+          const disparityTolerance = duration ? 1/duration : 0
     
-        const voonFrameDuration = 1/fileSnippet!.fps
-        
-        const absoluteTimeDifference = (frame: number) => {
-          return Math.abs(currentTime!-(voonFrameDuration*frame))
+          const voonFrameDuration = 1/fileSnippet.fps
+          
+          const absoluteTimeDifference = (frame: number) => {
+            return currentTime ? Math.abs(currentTime-(voonFrameDuration*frame)) : 0
+          }
+  
+          let currentFrameData = fileSnippet.frameData.filter((fd: FrameDataOut) => {
+              if (absoluteTimeDifference(fd.frame) <= 10) {
+                return true
+              } else {
+                return false
+              }
+          })
+  
+          const orderedComments = currentFrameData.sort((a, b) => {
+            return absoluteTimeDifference(a.frame) - absoluteTimeDifference(b.frame)
+          })
+  
+          if (orderedComments.length > 0) {
+            return orderedComments[0]
+          } else {
+            return undefined
+          }
         }
-
-        let currentFrameData = fileSnippet!.frameData.filter((fd: FrameDataOut) => {
-            if (absoluteTimeDifference(fd.frame) <= 10) {
-              return true
-            } else {
-              return false
-            }
-        })
-
-        const orderedComments = currentFrameData.sort((a, b) => {
-          return absoluteTimeDifference(a.frame) - absoluteTimeDifference(b.frame)
-        })
-
-        if (orderedComments.length > 0) {
-          return orderedComments[0]
-        } else {
-          return undefined
-        }
+        return undefined
       }
       
       // runs every equidistant amt of time
       let frameDataShowing: number | undefined
       fileSnippetFunction = () => {
-        console.log('Ran FSF');
-        
         const videoPlayer: any = document.getElementById('movie_player')
         const htmlVideoPlayer: any = document.getElementsByTagName('video')[0]
         
         if (videoPlayer){
           const currentFD = currentFrameData(htmlVideoPlayer)
           const currentFrame = currentFD ? currentFD.frame : undefined
-          // if (currentFrame !== frameDataShowing) {
-            // console.log('Changed frameData to frame: ', currentFrame);
             
-            code.style.display = 'none'
-            fileSnippetContainer!.innerHTML = ''
+          code.style.display = 'none'
+          fileSnippetContainer!.innerHTML = ''
+          
+          
+          if (currentFD) {
+            if (fileSnippetContainer) {
+              fileSnippetContainer.appendChild(code)
             
-            
-            if (currentFD) {
-              fileSnippetContainer!.appendChild(code)
-              
               for (const fileInFrame of currentFD.fileInFrames) {
                 const btn = document.createElement('div')
                 let relFiF
@@ -500,17 +521,21 @@ const contentMessageListener = async (message: ChromeMessage, sender: chrome.run
                 btn.className = 'codeSnippetBtn'
                 btn.style.cssText = fileSnippetBtnStyle(relFiF)
                 
-                fileSnippetContainer!.appendChild(btn)
-        
-                const snippetURL = 'https://voon-snippet.herokuapp.com/' + fileSnippet!.githubURL + '/blob/master/' + fileInFrame.fileURL
-                fileBtn(btn, snippetURL, code, relFiF)
+                fileSnippetContainer.appendChild(btn)
+                if (fileSnippet) {
+                  const snippetURL = 'https://voon-snippet.herokuapp.com/' + fileSnippet.githubURL + '/blob/master/' + fileInFrame.fileURL
+                  fileBtn(btn, snippetURL, code, relFiF)
+                }
               }
             }
-            frameDataShowing = currentFrame
-          if (overlayShowing) {
-            fileSnippetContainer!.style.cssText = fileSnippetContainer!.style.cssText + SHOW
-          } else {
-            fileSnippetContainer!.style.cssText = fileSnippetContainer!.style.cssText + HIDDEN
+          }
+          frameDataShowing = currentFrame
+          if (fileSnippetContainer) {
+            if (overlayShowing) {
+              fileSnippetContainer.style.cssText = fileSnippetContainer.style.cssText + SHOW
+            } else {
+              fileSnippetContainer.style.cssText = fileSnippetContainer.style.cssText + HIDDEN
+            }
           }
         }
       }
@@ -518,28 +543,5 @@ const contentMessageListener = async (message: ChromeMessage, sender: chrome.run
     console.log('fileSnippet at the end: ', fileSnippet);
     
   }
-  // if (
-  //   sender.id === chrome.runtime.id &&
-  //   message.from === Sender.Background &&
-  //   message.message === Message.CHANGE_LIVECOMMENT_VISIBILITY
-  // ) {
-  //   console.log('Changing live comment visibility');
-  //   const videoPlayer: any = document.getElementById('movie_player')
-  //   if (videoPlayer) {
-  //     videoPlayer.classList.toggle('ytp-autohide')
-  //   }
-  // }
-  // if (
-  //   sender.id === chrome.runtime.id &&
-  //   message.from === Sender.Background &&
-  //   message.message === Message.ACTIVATE_LIVECOMMENT
-  // ) {
-  //   console.log('Changing live comment visibility');
-  //   const videoPlayer: any = document.getElementById('movie_player')
-  //   if (videoPlayer) {
-  //     videoPlayer.classList.toggle('ytp-autohide')
-  //   }
-  // }
 }
-// apply contentMessageListener to runtime
 chrome.runtime.onMessage.addListener(contentMessageListener);

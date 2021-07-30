@@ -3,7 +3,9 @@ import { fetchGraphQL, fetchLiveComments, wait } from "../helperFunctions";
 import { GET_VIDEO_FILESNIPPET, GET_VIDEO_LIVECOMMENT } from "../schemas";
 
 const initiateEnvironmentIfPossible = async (tabId: number, url: string) => {
-  if (url?.includes('www.youtube.com')) {
+  console.log(`Sending environment if on youtube for ${url}`);
+  
+  if (url && url.includes('www.youtube.com')) {
     const message: ChromeMessage = {
       from: Sender.Background,
       message: Message.INITIATE_ENVIRONMENT,
@@ -14,16 +16,20 @@ const initiateEnvironmentIfPossible = async (tabId: number, url: string) => {
       message
     );
   } else {
-    Error('Not a youtube video');
+    console.log('Not a youtube video (initiateEnvironmentIfPossible)');
   }
 }
 
 const sendFileSnippetIfAvailable = async (tabId: number, url: string) => {
-  if (url?.includes('www.youtube.com')) {
+  console.log(`Sending if file snippet is available for ${url}`);
+  
+  if (url && url.includes('www.youtube.com')) {
     const videoId = url.includes('v=') ? url.split('v=')[1] : url.split('/')[4];
     const variables = {videoId};
     const getFileSnippet = await fetchGraphQL(GET_VIDEO_FILESNIPPET, variables);
-    const fileSnippet = getFileSnippet.data.video_by_pk ? getFileSnippet.data.video_by_pk.fileSnippets[0] : null;
+    const fileSnippet = getFileSnippet.data.video_by_pk ? getFileSnippet.data.video_by_pk.fileSnippets[0] : undefined;
+    console.log('fileSnippet: ', fileSnippet);
+    
     if (fileSnippet) {
       const message: ChromeMessage = {
         from: Sender.Background,
@@ -36,22 +42,20 @@ const sendFileSnippetIfAvailable = async (tabId: number, url: string) => {
       );
     }
     else {
-      Error('No file snippet available');
+      console.log('No file snippet available');
     }
   } else {
-    Error('Not a youtube video');
+    console.log('Not a youtube video (sendFileSnippetIfAvailable)');
+    
   }
 }
 
 const sendLiveCommentIfAvailable = async (tabId: number, url: string) => {
-  console.log('attempting to send liveComment');
+  console.log(`Sending if live comment is available for ${url}`);
   
-
-  if (url?.includes('www.youtube.com')) {
+  if (url && url.includes('www.youtube.com')) {
     const videoId = url.includes('v=') ? url.split('v=')[1] : url.split('/')[4];
     const variables: LiveCommentIn = {videoId};
-    // const getLiveComment = await fetchGraphQL(GET_VIDEO_LIVECOMMENT, variables);
-    // const liveComments = getLiveComment.data.video_by_pk ? getLiveComment.data.video_by_pk.liveComments : null;
     const getLiveComment = await fetchLiveComments(variables)
     const liveComments = getLiveComment.liveComments
 
@@ -69,16 +73,18 @@ const sendLiveCommentIfAvailable = async (tabId: number, url: string) => {
       );
     }
     else {
-      Error('No live comments available');
+      console.log('No live comments available');
     }
   } else {
-    Error('Not a youtube video');
+    console.log('Not a youtube video (sendLiveCommentIfAvailable)');
   }
 }
 
 const onUpdatedListener = (tabId: number, changeInfo: chrome.tabs.TabChangeInfo, tab: chrome.tabs.Tab) => {
   console.log('change info: ', changeInfo);
-  if (changeInfo.status === 'loading', changeInfo.url) {
+  if (changeInfo.status === 'loading' && changeInfo.url) {
+    console.log(`Tab ${tabId} is resetting`);
+    
     const message: ChromeMessage = {
       from: Sender.Background,
       message: Message.RESET_CONTENT
@@ -89,7 +95,7 @@ const onUpdatedListener = (tabId: number, changeInfo: chrome.tabs.TabChangeInfo,
     ); 
   }
   if (tab.url && changeInfo.status === "complete") {
-    console.log('Sending file snippet to tab as requested by Updated Tab');
+    console.log('Initiating content');
     
     initiateEnvironmentIfPossible(tabId, tab.url);
     setTimeout(() => {
@@ -105,7 +111,7 @@ chrome.tabs.onUpdated.addListener(onUpdatedListener)
 const onMessageListener =  (message: ChromeMessage, sender: chrome.runtime.MessageSender) => {
   if (
     sender.id === chrome.runtime.id &&
-    message.from === (Sender.React || Sender.Content) &&
+    ((message.from === Sender.React) || (message.from === Sender.Content)) &&
     message.message === Message.REQUEST_FILESNIPPET
   ) {
     console.log('Sending file snippet to tab as requested by React');
@@ -125,6 +131,7 @@ const onMessageListener =  (message: ChromeMessage, sender: chrome.runtime.Messa
 chrome.runtime.onMessage.addListener(onMessageListener);
 
 const createFileSnippet = async (url: string, fps: number, tabId: number) => {
+  console.log(`Creating file snippet on background`);
   
   // await wait(1000)
   var requestOptions = {

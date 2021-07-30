@@ -29,7 +29,7 @@ import { FileSnippet, LiveComment } from "../types";
 
 const AppsWrapper: FunctionComponent = ({ children }) => {
   const [fileSnippet, setFileSnippet] = useState<FileSnippet>({
-    state: true,
+    state: false,
   });
   const [liveComment, setLiveComment] = useState<LiveComment>({
     state: false,
@@ -67,7 +67,7 @@ const AppsWrapper: FunctionComponent = ({ children }) => {
           title="File Snippet"
           description="Scans video for files documented on github, then provides you with the corresponding code snippet."
           icon={BsFileEarmarkCode}
-          activated={fileSnippet.state}
+          activated={fileSnippet && fileSnippet.state}
           setActivated={setFileSnippetActivated}
         >
           <FileSnippetContent fileSnippet={fileSnippet} setFileSnippet={setFileSnippet} />
@@ -77,7 +77,7 @@ const AppsWrapper: FunctionComponent = ({ children }) => {
           title="Live Comment"
           description="Shows timestamped comments live on the video."
           icon={AiOutlineComment}
-          activated={liveComment.state}
+          activated={liveComment && liveComment.state}
           setActivated={setLiveCommentActivated}
         >
           <LiveCommentContent liveComment={liveComment} setLiveComment={setLiveComment} />
