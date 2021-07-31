@@ -8,7 +8,7 @@ export const BASE_STYLE = `
         border: 1px solid;
         border-radius: 10px;
         border-image: linear-gradient(var(--angle), rgb(231, 111, 81), rgb(255, 255, 255)) 1;
-        animation: 4s rotate linear infinite;
+        animation: 0.5s rotate linear infinite;
     }
 
     @keyframes rotate {

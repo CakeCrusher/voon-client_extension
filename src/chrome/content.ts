@@ -69,7 +69,6 @@ const clock = () => {
     }
   }
   
-  console.log(`liveComments: ${liveComments ? liveComments.length : 0}, state: ${liveCommentState && liveCommentState.state}`);
   
   if (liveComments && liveCommentState && liveCommentState.state) {
     liveCommentFunction()
@@ -97,7 +96,6 @@ const liveCommentFunction = async () => {
             }
           }
         })
-        console.log('filteredComments', filteredComments);
         
         // order objects by a key in order of smallest to largest
         orderedComments = filteredComments.sort((a, b) => {
@@ -250,59 +248,156 @@ const onStorageChange = async (changes: any, namespace: any) => {
 chrome.storage.onChanged.addListener(onStorageChange)
 
 // content message listener function
+let loadingURL = ''
+// because on the first load the content is not ready the loadingURL is '' and so on the first navigation
+setTimeout(() => {
+  chrome.tabs && chrome.tabs.query({active: true,currentWindow: true}, (tabs: any) => {
+    loadingURL = tabs[0].url
+  }) 
+}, 500)
+
+let completeURL = ''
+
+const resetContent = () => {
+  console.log('Resetting content');
+    
+  if (greenBox !== undefined) {
+    greenBox.innerHTML = ''
+  }
+  videoId = undefined
+  screen = undefined
+  screenHeight = undefined
+  screenWidth = undefined
+  videoPlayer = undefined
+  overlayShowing = undefined
+  htmlVideoPlayer = undefined
+  currentTime = undefined
+  duration = undefined
+  if (redBox) {
+    redBox.remove()
+  }
+  redBox = undefined
+  if (greenBox) {
+    greenBox.remove()
+  }
+  greenBox = undefined
+  // FileSnippet
+  relativeFiF = undefined
+  fileSnippet = undefined
+  if (fileSnippetContainer) {
+    fileSnippetContainer.remove()
+  }
+  fileSnippetContainer = undefined
+  fileSnippetFunction = undefined
+
+  // LiveComment
+  if (liveCommentsContainer) {
+    liveCommentsContainer.remove()
+  }
+  liveCommentsContainer = undefined
+  liveComments = undefined
+}
+const initiateEnvironment = (url: string) => {
+  console.log('Initiating environment');
+    
+  // create a style element and append it to the head of the document
+  const baseStyle = document.createElement('style');
+  baseStyle.type = 'text/css';
+  baseStyle.innerHTML = BASE_STYLE;
+  document.head.appendChild(baseStyle);
+  const videoURL = url
+  videoId = videoURL.includes('v=') ? videoURL.split('v=')[1].split('&')[0] : videoURL.split('/')[3]
+  
+  // sets up containers red and green
+  if (document.querySelector<HTMLElement>('.video-stream')) {
+    screen = document.querySelector<HTMLElement>('.video-stream')!
+  }
+  if (screen) {
+    screenHeight = screen.style.height
+    screenWidth = screen.style.width
+  }
+
+  redBox = document.createElement('div')
+  redBox.id = 'redBox'
+  greenBox = document.createElement('div')
+  greenBox.id = 'greenBox'
+  if (screenHeight && screenWidth) {
+    redBox.style.cssText = redBoxStyle(screenHeight)
+    greenBox.style.cssText = greenBoxStyle(screenWidth, screenHeight)
+  }
+
+  videoPlayer = document.getElementById('movie_player')
+  overlayShowing = !videoPlayer.classList.contains('ytp-autohide')
+
+  htmlVideoPlayer = document.getElementsByTagName('video')[0]
+  currentTime = htmlVideoPlayer.currentTime
+  duration = htmlVideoPlayer.duration
+
+  chrome.storage.sync.get(['fileSnippet', 'liveComment'], (res) => {
+    if (res.fileSnippet) {
+      fileSnippetState = res.fileSnippet
+      if (fileSnippetState && fileSnippetState.state) {
+        initiateFileSnippetContainer()
+      }
+    }
+    if (res.liveComment) {
+      liveCommentState = res.liveComment
+      if (liveCommentState && liveCommentState.state) {
+        initiateLiveCommentsContainer()
+      }
+    }
+  })
+
+  if (greenBox) {
+    redBox.appendChild(greenBox)
+  }
+  if (screen) {
+    screen.parentElement?.parentElement?.appendChild(redBox)
+  }
+}
+
 const contentMessageListener = async (message: ChromeMessage, sender: chrome.runtime.MessageSender) => {
-  console.log('Message recieved: ', message);
+  if (
+    sender.id === chrome.runtime.id &&
+    message.from === Sender.Background &&
+    message.message === Message.STATUS_UPDATE
+  ) {
+    if (message.payload.status === 'loading' && message.payload.url !== loadingURL && message.tab) {
+      console.log('loadingURL', loadingURL);
+      console.log('message.payload.url', message.payload.url);
+      
+      console.log('Status feed indicates navigation. Running reset');
+      
+      loadingURL = message.payload.url
+      resetContent()
+    }
+    if (message.payload.status === 'complete' && message.payload.url !== completeURL && message.tab) {
+      console.log('Status feed indicates navigation. Running initiation');
+
+      completeURL = message.payload.url
+      // send a message to the background for a RESET_CONTENT 
+      const messageToSend: ChromeMessage = {
+        from: Sender.Content,
+        message: Message.INITIATE_ENVIRONMENT,
+        tab: {id: message.tab.id, url: message.payload.url}
+      };
+      chrome.runtime.sendMessage(messageToSend);
+    }
+  }
   if (
     sender.id === chrome.runtime.id &&
     message.from === Sender.Background &&
     message.message === Message.RESET_CONTENT
   ) {
-    console.log('Resetting content');
-    
-    if (greenBox !== undefined) {
-      greenBox.innerHTML = ''
-    }
-    videoId = undefined
-    screen = undefined
-    screenHeight = undefined
-    screenWidth = undefined
-    videoPlayer = undefined
-    overlayShowing = undefined
-    htmlVideoPlayer = undefined
-    currentTime = undefined
-    duration = undefined
-    if (redBox) {
-      redBox.remove()
-    }
-    redBox = undefined
-    if (greenBox) {
-      greenBox.remove()
-    }
-    greenBox = undefined
-    // FileSnippet
-    relativeFiF = undefined
-    fileSnippet = undefined
-    if (fileSnippetContainer) {
-      fileSnippetContainer.remove()
-    }
-    fileSnippetContainer = undefined
-    fileSnippetFunction = undefined
-
-    // LiveComment
-    if (liveCommentsContainer) {
-      liveCommentsContainer.remove()
-    }
-    liveCommentsContainer = undefined
-    liveComments = undefined
+    resetContent()
   }
   if (
     sender.id === chrome.runtime.id &&
     message.from === Sender.React &&
     message.message === Message.HAS_FILESNIPPET
   ) {
+    console.log('Does file snippet exist: ', Boolean(fileSnippet));
     if (fileSnippet) {
-      console.log(`fileSnippet already exists`);
-      
       const message: ChromeMessage = {
         from: Sender.Content,
         message: Message.HAS_FILESNIPPET
@@ -310,79 +405,22 @@ const contentMessageListener = async (message: ChromeMessage, sender: chrome.run
       chrome.runtime.sendMessage(
         message
       );
-    } else {
-      console.log(`fileSnippet does not exist`);
-      
     }
-
   }
   if (
     sender.id === chrome.runtime.id &&
     message.from === Sender.Background &&
     message.message === Message.INITIATE_ENVIRONMENT
   ) {
-    console.log('Injecting css');
-    
-    // create a style element and append it to the head of the document
-    const baseStyle = document.createElement('style');
-    baseStyle.type = 'text/css';
-    baseStyle.innerHTML = BASE_STYLE;
-    document.head.appendChild(baseStyle);
-    const videoURL = message.payload.url
-    videoId = videoURL.includes('v=') ? videoURL.split('v=')[1].split('&')[0] : videoURL.split('/')[3]
-    
-    // sets up containers red and green
-    if (document.querySelector<HTMLElement>('.video-stream')) {
-      screen = document.querySelector<HTMLElement>('.video-stream')!
-    }
-    if (screen) {
-      screenHeight = screen.style.height
-      screenWidth = screen.style.width
-    }
-
-    redBox = document.createElement('div')
-    redBox.id = 'redBox'
-    greenBox = document.createElement('div')
-    greenBox.id = 'greenBox'
-    if (screenHeight && screenWidth) {
-      redBox.style.cssText = redBoxStyle(screenHeight)
-      greenBox.style.cssText = greenBoxStyle(screenWidth, screenHeight)
-    }
-
-    videoPlayer = document.getElementById('movie_player')
-    overlayShowing = !videoPlayer.classList.contains('ytp-autohide')
-
-    htmlVideoPlayer = document.getElementsByTagName('video')[0]
-    currentTime = htmlVideoPlayer.currentTime
-    duration = htmlVideoPlayer.duration
-
-    chrome.storage.sync.get(['fileSnippet', 'liveComment'], (res) => {
-      if (res.fileSnippet) {
-        fileSnippetState = res.fileSnippet
-        if (fileSnippetState && fileSnippetState.state) {
-          initiateFileSnippetContainer()
-        }
-      }
-      if (res.liveComment) {
-        liveCommentState = res.liveComment
-        if (liveCommentState && liveCommentState.state) {
-          initiateLiveCommentsContainer()
-        }
-      }
-    })
-
-    if (greenBox) {
-      redBox.appendChild(greenBox)
-    }
-    if (screen) {
-      screen.parentElement?.parentElement?.appendChild(redBox)
-    }
+    initiateEnvironment(message.payload.url)
   }
   if (
     sender.id === chrome.runtime.id &&
     message.from === Sender.React &&
     message.message === Message.VIDEODETAILS
   ) {
+    console.log('Responding video details');
+    
     const message: ChromeMessage = {
       from: Sender.Content,
       message: Message.VIDEODETAILS,
@@ -400,7 +438,7 @@ const contentMessageListener = async (message: ChromeMessage, sender: chrome.run
     message.from === Sender.Background &&
     message.message === Message.ACTIVATE_LIVECOMMENT
   ) {
-    console.log('Live comments: ', message.payload.liveComments);
+    console.log('Activating live comments: ', message.payload.liveComments);
     liveComments = message.payload.liveComments
     liveCommentFunction()
   }
@@ -409,12 +447,10 @@ const contentMessageListener = async (message: ChromeMessage, sender: chrome.run
     message.from === Sender.Background &&
     message.message === Message.ACTIVATE_FILESNIPPET
   ) {
-    console.log('Activating file snippet');
+    console.log('Activating file snippet: ', message.payload.fileSnippet);
     fileSnippet = message.payload.fileSnippet
-    console.log('message.payload.fileSnippet: ', message.payload.fileSnippet);
     
     if (fileSnippet) {
-      console.log("File Snippet: ", fileSnippet);
       relativeFiF = (fileInFrame: DataInFrame): DataInFrame | undefined => {
         if (screenHeight && screenWidth && fileSnippet) {
           const xRatio = parseInt(screenWidth) / fileSnippet.width
@@ -540,7 +576,6 @@ const contentMessageListener = async (message: ChromeMessage, sender: chrome.run
         }
       }
     }
-    console.log('fileSnippet at the end: ', fileSnippet);
     
   }
 }

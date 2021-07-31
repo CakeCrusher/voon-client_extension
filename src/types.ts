@@ -15,6 +15,7 @@ export enum Message {
     INITIATE_ENVIRONMENT = 'initiate environment',
     VIDEODETAILS = 'video details',
     RESET_CONTENT = 'reset content',
+    STATUS_UPDATE = 'status update',
 }
 
 export interface ChromeMessage {
@@ -22,6 +23,11 @@ export interface ChromeMessage {
     message: string,
     tab?: Tab,
     payload?: any,
+}
+
+export type OnUpdateFeed = {
+    status: any,
+    url: string
 }
 
 export type LiveCommentOut = {
