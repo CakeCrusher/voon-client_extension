@@ -249,13 +249,6 @@ chrome.storage.onChanged.addListener(onStorageChange)
 
 // content message listener function
 let loadingURL = ''
-// because on the first load the content is not ready the loadingURL is '' and so on the first navigation
-setTimeout(() => {
-  chrome.tabs && chrome.tabs.query({active: true,currentWindow: true}, (tabs: any) => {
-    loadingURL = tabs[0].url
-  }) 
-}, 500)
-
 let completeURL = ''
 
 const resetContent = () => {
@@ -363,9 +356,7 @@ const contentMessageListener = async (message: ChromeMessage, sender: chrome.run
     message.message === Message.STATUS_UPDATE
   ) {
     if (message.payload.status === 'loading' && message.payload.url !== loadingURL && message.tab) {
-      console.log('loadingURL', loadingURL);
-      console.log('message.payload.url', message.payload.url);
-      
+      // because on the first load the content is not ready the loadingURL is '' and so on the first navigation
       console.log('Status feed indicates navigation. Running reset');
       
       loadingURL = message.payload.url
