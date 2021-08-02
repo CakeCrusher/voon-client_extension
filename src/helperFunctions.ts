@@ -44,7 +44,7 @@ export const fetchLiveComments = async (variables: LiveCommentIn) => {
         }
     };
 
-    const requestURL = `https://90944f095560.ngrok.io/liveComments?videoId=${variables.videoId}`
+    const requestURL = `https://0bbf25c4dc96.ngrok.io/liveComments?videoId=${variables.videoId}`
     const res = await fetch(requestURL, requestOptions).then((res: Response) => res.json())
     
     // await wait(500)

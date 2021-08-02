@@ -32,6 +32,7 @@ let fileSnippet: FileSnippetOut | undefined
 let fileSnippetContainer: HTMLElement | undefined
 let fileSnippetFunction: Function | undefined
 let fileSnippetState: FileSnippet | undefined
+let code: HTMLIFrameElement | undefined
 
 // LiveComment
 let liveCommentsContainer: HTMLElement | undefined
@@ -213,9 +214,12 @@ const onStorageChange = async (changes: any, namespace: any) => {
             );
           }) 
         }
-        if (!changes.fileSnippet.newValue.state && fileSnippetContainer) {
+        if (!changes.fileSnippet.newValue.state && fileSnippetContainer && code) {
           fileSnippetContainer.remove()
           fileSnippetContainer = undefined
+          // HOTFIX
+          code.remove()
+          code = undefined
         }
       }
     }
@@ -282,6 +286,11 @@ const resetContent = () => {
   }
   fileSnippetContainer = undefined
   fileSnippetFunction = undefined
+  if (code) {
+    code.remove()
+  }
+  code = undefined
+  
 
   // LiveComment
   if (liveCommentsContainer) {
@@ -359,12 +368,13 @@ const contentMessageListener = async (message: ChromeMessage, sender: chrome.run
       // because on the first load the content is not ready the loadingURL is '' and so on the first navigation
       console.log('Status feed indicates navigation. Running reset');
       
-      loadingURL = message.payload.url
+      // loadingURL = message.payload.url
       resetContent()
     }
     if (message.payload.status === 'complete' && message.payload.url !== completeURL && message.tab) {
       console.log('Status feed indicates navigation. Running initiation');
-
+      // HOTFIX: loadingURL should be changed only when status = loading
+      loadingURL = message.payload.url
       completeURL = message.payload.url
       // send a message to the background for a RESET_CONTENT 
       const messageToSend: ChromeMessage = {
@@ -456,8 +466,12 @@ const contentMessageListener = async (message: ChromeMessage, sender: chrome.run
         return undefined
       }
       
-      let code = document.createElement('iframe')
+      code = document.createElement('iframe')
       code.style.display = 'none'
+      // HOTFIX: the code element should be added to fileSnippetContainer
+      if (greenBox) {
+        greenBox.appendChild(code)
+      }
       
       const fileBtn = (ele: HTMLElement, url: string, codeFrame: HTMLIFrameElement, relFiF: any) => {
         const centerFiF =  relFiF.x + (relFiF.width/2)
@@ -479,7 +493,7 @@ const contentMessageListener = async (message: ChromeMessage, sender: chrome.run
           }
           codeFrame.src = url
           
-          if (screenHeight && screenWidth) {
+          if (screenHeight && screenWidth && code) {
             if (isFiFRightMost) {
               code.style.cssText = codeSnippetRMStyle(currentDisplay, relFiF, screenHeight)
             } else {
@@ -523,6 +537,8 @@ const contentMessageListener = async (message: ChromeMessage, sender: chrome.run
       
       // runs every equidistant amt of time
       let frameDataShowing: number | undefined
+
+
       fileSnippetFunction = () => {
         const videoPlayer: any = document.getElementById('movie_player')
         const htmlVideoPlayer: any = document.getElementsByTagName('video')[0]
@@ -531,13 +547,14 @@ const contentMessageListener = async (message: ChromeMessage, sender: chrome.run
           const currentFD = currentFrameData(htmlVideoPlayer)
           const currentFrame = currentFD ? currentFD.frame : undefined
             
-          code.style.display = 'none'
-          fileSnippetContainer!.innerHTML = ''
+          // code.style.display = 'none'
+          if (fileSnippetContainer) {
+            fileSnippetContainer.innerHTML = ''
+          }
           
           
           if (currentFD) {
             if (fileSnippetContainer) {
-              fileSnippetContainer.appendChild(code)
             
               for (const fileInFrame of currentFD.fileInFrames) {
                 const btn = document.createElement('div')
@@ -549,7 +566,7 @@ const contentMessageListener = async (message: ChromeMessage, sender: chrome.run
                 btn.style.cssText = fileSnippetBtnStyle(relFiF)
                 
                 fileSnippetContainer.appendChild(btn)
-                if (fileSnippet) {
+                if (fileSnippet && code) {
                   const snippetURL = 'https://voon-snippet.herokuapp.com/' + fileSnippet.githubURL + '/blob/master/' + fileInFrame.fileURL
                   fileBtn(btn, snippetURL, code, relFiF)
                 }
