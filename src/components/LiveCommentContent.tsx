@@ -1,34 +1,10 @@
-import React, { FunctionComponent, useState, useEffect } from "react";
+import React, { FunctionComponent, useState } from "react";
 import {
-  Button,
-  Box,
-  ChakraProvider,
-  Code,
   Checkbox,
-  DarkMode,
   Flex,
-  IconButton,
-  Link,
-  Menu,
-  MenuButton,
-  MenuItem,
-  MenuList,
-  OrderedList,
-  Spinner,
-  useClipboard,
-  Text,
-  Stack,
-  Input,
-  Progress,
-  useMenuButton,
 } from "@chakra-ui/react";
-import AppContainer from "./AppContainer";
 import '../App.css';
-
-import {BsFileEarmarkCode} from "react-icons/bs"
-import {AiOutlineComment} from "react-icons/ai"
-import { wait } from "../helperFunctions";
-import { ChromeMessage, Message, Sender, LiveComment } from "../types";
+import { LiveComment } from "../types";
 
 type LiveCommentContentProps = {
   liveComment: LiveComment,
@@ -38,10 +14,6 @@ type LiveCommentContentProps = {
 
 const LiveCommentContent: FunctionComponent<LiveCommentContentProps> = ({liveComment, setLiveComment, children}) => {  
   const [showReplies, setShowReplies] = useState(false);
-  // const [liveComment, setLiveComment] = useState<LiveComment>({
-  //   state: false,
-  //   lowVisibility: false
-  // });
 
   const onLowVisibilityChange = () => {
     const newLiveComment = {

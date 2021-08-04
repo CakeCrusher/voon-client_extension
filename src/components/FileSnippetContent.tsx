@@ -1,33 +1,14 @@
 import React, { FunctionComponent, useState, useEffect } from "react";
 import {
   Button,
-  Box,
-  ChakraProvider,
-  Code,
-  DarkMode,
   Flex,
-  IconButton,
-  Link,
-  Menu,
-  MenuButton,
-  MenuItem,
-  MenuList,
-  OrderedList,
-  Spinner,
-  useClipboard,
   Text,
-  Stack,
   Input,
-  Progress,
-  useMenuButton,
 } from "@chakra-ui/react";
-import AppContainer from "./AppContainer";
 import '../App.css';
 
-import {BsFileEarmarkCode} from "react-icons/bs"
-import {AiOutlineComment} from "react-icons/ai"
-import { fetchGraphQL, postNewFileSnippet, wait } from "../helperFunctions";
-import { CREATE_FILESNIPPET, SAVE_FILESNIPPET } from "../schemas"
+import { fetchGraphQL, postNewFileSnippet } from "../helperFunctions";
+import { SAVE_FILESNIPPET } from "../schemas"
 import { ChromeMessage, FileSnippet, makeFileSnippetIn, Message, Sender } from "../types";
 
 type FileSnippetContentType = {
@@ -48,21 +29,6 @@ const FileSnippetContent: FunctionComponent<FileSnippetContentType> = ({fileSnip
   useEffect(() => {
     const onMessageListener = async (message: ChromeMessage, sender: chrome.runtime.MessageSender) => {
       console.log('Recieved message: ', message);
-      
-      if (
-        sender.id === chrome.runtime.id &&
-        message.from === Sender.React &&
-        message.message === Message.CREATE_FILESNIPPET
-      ) {
-        console.log('Finished creating fileSnippet');
-        // setGenerated(true)
-        // // stops all timeouts and intervals
-        // const killId = window.setTimeout(function() {
-        //   for (var i = killId; i > 0; i--) clearInterval(i)
-        // }, 1);
-        // setLoadingProgress(0);
-        // setLoading(false);
-      }
       if (
         sender.id === chrome.runtime.id &&
         message.from === Sender.Content &&
@@ -155,33 +121,7 @@ const FileSnippetContent: FunctionComponent<FileSnippetContentType> = ({fileSnip
         message
       );
     })
-  } 
-
-  const activateFileSnippet = () => {
-    console.log('Requesting fileSnippet to background due to Button press');
-
-    const queryInfo: chrome.tabs.QueryInfo = {
-      active: true,
-      currentWindow: true
-    }
-
-    chrome.tabs && chrome.tabs.query(queryInfo, tabs => {
-      const message: ChromeMessage = {
-        from: Sender.React,
-        message: Message.REQUEST_FILESNIPPET,
-        tab: {
-          id: tabs[0].id!,
-          url: tabs[0].url!
-        }
-      }; 
-
-      chrome.runtime.sendMessage(
-        message
-      );
-    })
   }
-
-  // react chakra input with state
 
   const generatingInfo = loading ? <Text>Generating: <strong>{loadingProgress}%</strong></Text> : <Text>Generate File Snippet</Text>
 

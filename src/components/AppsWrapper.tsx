@@ -1,22 +1,6 @@
 import React, { FunctionComponent, useState, useEffect } from "react";
 import {
-  Button,
-  Box,
-  ChakraProvider,
-  Code,
-  DarkMode,
   Flex,
-  IconButton,
-  Link,
-  Menu,
-  MenuButton,
-  MenuItem,
-  MenuList,
-  OrderedList,
-  Spinner,
-  useClipboard,
-  Text,
-  Input,
 } from "@chakra-ui/react";
 import AppContainer from "./AppContainer";
 import '../App.css';

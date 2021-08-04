@@ -1,27 +1,10 @@
 import React, { FunctionComponent, useState } from "react";
 import {
-  Button,
-  Box,
-  ChakraProvider,
-  Code,
-  DarkMode,
   Flex,
-  IconButton,
-  Link,
-  Menu,
-  MenuButton,
-  MenuItem,
-  MenuList,
-  OrderedList,
-  Spinner,
-  useClipboard,
-  Input,
   Text,
   Icon,
 } from "@chakra-ui/react";
 import '../App.css';
-
-import {BsCheck} from "react-icons/bs"
 
 
 type AppProps = {
@@ -77,15 +60,6 @@ const AppContainer: FunctionComponent<AppProps> = (props) => {
         >
           {props.children}
         </Flex>
-        {/* <Flex 
-          h="full"
-          w="50px"
-          className="success"
-          just="center"
-          align="center"
-        >
-          <Icon as={BsCheck} h="10" w="10" />
-        </Flex> */}
       </Flex>
     </Flex>
   )
