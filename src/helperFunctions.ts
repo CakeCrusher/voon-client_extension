@@ -1,5 +1,5 @@
 import { liveCommentsResult } from "./results";
-import { DataInFrame, DataInFrameOut, FileSnippetOut, LiveCommentIn, makeFileSnippetIn } from "./types";
+import { DataInFrame, DataInFrameOut, FileSnippetOut, LiveCommentIn, makeFileSnippetIn, Message, Sender } from "./types";
 
 export const fetchGraphQL = async (schema: String, variables: Object = {}) => {
     var graphql = JSON.stringify({
@@ -53,18 +53,6 @@ export const fetchLiveComments = async (variables: LiveCommentIn) => {
     return res
 }
 
-export const wait = (ms: number): Promise<boolean> => new Promise(resolve => setTimeout(resolve, ms, true))
 
-export const relativeFiF = (screenWidth: string, screenHeight: string, fileSnippet: FileSnippetOut, fileInFrame: DataInFrameOut): DataInFrameOut | undefined => {
-    if (screenHeight && screenWidth && fileSnippet) {
-      const xRatio = parseInt(screenWidth) / fileSnippet.width
-      const yRatio = parseInt(screenHeight) / fileSnippet.height
-      const newFileInFrame = {...fileInFrame}
-      newFileInFrame['x'] = Math.round(fileInFrame.x*xRatio)
-      newFileInFrame['width'] = Math.round(fileInFrame.width*xRatio)
-      newFileInFrame['y'] = Math.round(fileInFrame.y*yRatio)
-      newFileInFrame['height'] = Math.floor(fileInFrame.height*yRatio)
-      return newFileInFrame
-    }
-    return undefined
-  }
+
+export const wait = (ms: number): Promise<boolean> => new Promise(resolve => setTimeout(resolve, ms, true))

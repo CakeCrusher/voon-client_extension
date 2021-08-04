@@ -1,6 +1,6 @@
-import { ChromeMessage, Sender, MessageResponse, FrameData, Message, FileSnippetOut, FrameDataOut, FileSnippet, LiveComment, LiveCommentOut } from "../types";
+import { ChromeMessage, Sender, MessageResponse, FrameData, Message, FileSnippetOut, FrameDataOut, FileSnippet, LiveComment, LiveCommentOut, DataInFrameOut } from "../types";
 import { GET_VIDEO_FILESNIPPET } from "../schemas";
-import { fetchGraphQL, relativeFiF } from "../helperFunctions";
+import { fetchGraphQL } from "../helperFunctions";
 import { 
     BASE_STYLE,
     fileSnippetBtnStyle,
@@ -478,6 +478,20 @@ const fileSnippetFunction = () => {
     return undefined
   }
 
+  const relativeFiF = (screenWidth: string, screenHeight: string, fileInFrame: DataInFrameOut): DataInFrameOut | undefined => {
+    if (screenHeight && screenWidth && fileSnippet) {
+      const xRatio = parseInt(screenWidth) / fileSnippet.width
+      const yRatio = parseInt(screenHeight) / fileSnippet.height
+      const newFileInFrame = {...fileInFrame}
+      newFileInFrame['x'] = Math.round(fileInFrame.x*xRatio)
+      newFileInFrame['width'] = Math.round(fileInFrame.width*xRatio)
+      newFileInFrame['y'] = Math.round(fileInFrame.y*yRatio)
+      newFileInFrame['height'] = Math.floor(fileInFrame.height*yRatio)
+      return newFileInFrame
+    }
+    return undefined
+  }
+
   if (videoPlayer){
     const currentFD = currentFrameData(htmlVideoPlayer)
     const currentFrame = currentFD ? currentFD.frame : undefined
@@ -495,7 +509,7 @@ const fileSnippetFunction = () => {
           const btn = document.createElement('div')
           let relFiF
           if (screenWidth && screenHeight && fileSnippet && fileInFrame) {
-            relFiF = relativeFiF(screenWidth, screenHeight, fileSnippet, fileInFrame)
+            relFiF = relativeFiF(screenWidth, screenHeight, fileInFrame)
           }
           btn.className = 'codeSnippetBtn'
           if (relFiF) {
