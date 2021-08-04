@@ -1,4 +1,4 @@
-import { DataInFrame } from "../types"
+import { DataInFrame, DataInFrameOut } from "../types"
 
 export const BASE_STYLE = `
     .codeSnippetBtn {
@@ -76,7 +76,7 @@ export const HIDDEN = `
     display:none;
 `
 
-export const fileSnippetBtnStyle = (relFiF: DataInFrame) => `
+export const fileSnippetBtnStyle = (relFiF: DataInFrameOut) => `
     height:${relFiF.height}px;
     width:${relFiF.width}px;
     left:${relFiF.x}px;
