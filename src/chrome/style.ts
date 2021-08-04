@@ -1,4 +1,4 @@
-import { DataInFrame, DataInFrameOut } from "../types"
+import { DataInFrame, DataInFrameOut } from "../types";
 
 export const BASE_STYLE = `
     .codeSnippetBtn {
@@ -66,24 +66,28 @@ export const BASE_STYLE = `
     .repliesContainer {
         padding-left: 15px;
     }
-`
+`;
 
 export const SHOW = `
     display:block;
-`
+`;
 
 export const HIDDEN = `
     display:none;
-`
+`;
 
 export const fileSnippetBtnStyle = (relFiF: DataInFrameOut) => `
     height:${relFiF.height}px;
     width:${relFiF.width}px;
     left:${relFiF.x}px;
     top:${relFiF.y}px;
-`
+`;
 
-export const codeSnippetRMStyle = (currentDisplay: string, relFiF: DataInFrame, screenHeight: string) => `
+export const codeSnippetRMStyle = (
+  currentDisplay: string,
+  relFiF: DataInFrameOut,
+  screenHeight: string
+) => `
     position:absolute;
     display:${currentDisplay};
     z-index:11;
@@ -91,17 +95,22 @@ export const codeSnippetRMStyle = (currentDisplay: string, relFiF: DataInFrame, 
     top:0px;
     width:${relFiF.x}px;
     height:${screenHeight}
-`
+`;
 
-export const codeSnippetLMStyle = (currentDisplay: string, endFiF: number, screenWidth: string, screenHeight: string) => `
+export const codeSnippetLMStyle = (
+  currentDisplay: string,
+  endFiF: number,
+  screenWidth: string,
+  screenHeight: string
+) => `
     position:absolute;
     display:${currentDisplay};
     z-index:11;
     left:0px;
     top:0px;
-    width:${parseInt(screenWidth)-endFiF}px;
+    width:${parseInt(screenWidth) - endFiF}px;
     height:${screenHeight}
-`
+`;
 
 export const redBoxStyle = (screenHeight: string) => `
     position:relative;
@@ -111,7 +120,7 @@ export const redBoxStyle = (screenHeight: string) => `
     justify-content:center;
     height:${screenHeight};
     width:100%;
-`
+`;
 
 export const greenBoxStyle = (screenWidth: string, screenHeight: string) => `
     position: relative;
@@ -119,4 +128,4 @@ export const greenBoxStyle = (screenWidth: string, screenHeight: string) => `
     height:${screenHeight};
     width:${screenWidth};
     background-color:rgba(0,255,0,0.5);
-`
+`;

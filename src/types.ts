@@ -1,106 +1,106 @@
 export enum Sender {
-    Background,
-    React,
-    Content
+  Background,
+  React,
+  Content,
 }
 
 export enum Message {
-    CREATE_FILESNIPPET = 'create file snippet',
-    HAS_FILESNIPPET = 'has file snippet',
-    ACTIVATE_FILESNIPPET = 'activate file snippet',
-    REQUEST_FILESNIPPET = 'request file snippet',
-    FINISHED_FILESNIPPET = 'finished file snippet',
-    ACTIVATE_LIVECOMMENT = 'activate live comment',
-    CHANGE_LIVECOMMENT_VISIBILITY = 'change live comment visibility',
-    INITIATE_ENVIRONMENT = 'initiate environment',
-    VIDEODETAILS = 'video details',
-    RESET_CONTENT = 'reset content',
-    STATUS_UPDATE = 'status update',
+  CREATE_FILESNIPPET = "create file snippet",
+  HAS_FILESNIPPET = "has file snippet",
+  ACTIVATE_FILESNIPPET = "activate file snippet",
+  REQUEST_FILESNIPPET = "request file snippet",
+  FINISHED_FILESNIPPET = "finished file snippet",
+  ACTIVATE_LIVECOMMENT = "activate live comment",
+  CHANGE_LIVECOMMENT_VISIBILITY = "change live comment visibility",
+  INITIATE_ENVIRONMENT = "initiate environment",
+  VIDEODETAILS = "video details",
+  RESET_CONTENT = "reset content",
+  STATUS_UPDATE = "status update",
 }
 
 export interface ChromeMessage {
-    from: Sender,
-    message: string,
-    tab?: Tab,
-    payload?: any,
+  from: Sender;
+  message: string;
+  tab?: Tab;
+  payload?: any;
 }
 
 export type OnUpdateFeed = {
-    status: any,
-    url: string
-}
+  status: any;
+  url: string;
+};
 
 export type LiveCommentOut = {
-    comment: string,
-    user: string,
-    time: number,
-    replies?: ReplyOut[]
-}
+  comment: string;
+  user: string;
+  time: number;
+  replies?: ReplyOut[];
+};
 type ReplyOut = {
-    comment: string,
-    user: string,
-}
+  comment: string;
+  user: string;
+};
 
 export type Tab = {
-    id?: number,
-    url?: string,
-}
+  id?: number;
+  url?: string;
+};
 
-export type MessageResponse = (response?: any) => void
+export type MessageResponse = (response?: any) => void;
 
 export type makeFileSnippetIn = {
-    url : String
-    per_frame : number
-}
+  url: string;
+  per_frame: number;
+};
 
 type Shape = {
-    x: number
-    y: number
-}
+  x: number;
+  y: number;
+};
 
 export type FileSnippetOut = {
-    githubURL: String
-    fps: number
-    height: number
-    width: number
-    frameData: FrameDataOut[]
-}
+  githubURL: string;
+  fps: number;
+  height: number;
+  width: number;
+  frameData: FrameDataOut[];
+};
 
 export type FrameDataOut = {
-    frame : number
-    fileInFrames : DataInFrameOut[]
-}
+  frame: number;
+  fileInFrames: DataInFrameOut[];
+};
 
 export type DataInFrameOut = {
-    fileURL: String
-    x: number
-    y: number
-    width: number
-    height: number
-}
+  fileURL: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
 
 export type FrameData = {
-    frame : number
-    data : DataInFrame[]
-}
+  frame: number;
+  data: DataInFrame[];
+};
 
 export type DataInFrame = {
-    file_name: String
-    x: number
-    y: number
-    width: number
-    height: number
-}
+  file_name: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
 
 export type FileSnippet = {
-    state: boolean;
-}
+  state: boolean;
+};
 
 export type LiveComment = {
-    state: boolean;
-    lowVisibility: boolean;
-}
+  state: boolean;
+  lowVisibility: boolean;
+};
 
 export type LiveCommentIn = {
-    videoId: String
-}
+  videoId: string;
+};

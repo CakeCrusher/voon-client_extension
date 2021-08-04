@@ -1,13 +1,9 @@
-import {
-  ChakraProvider,
-  DarkMode,
-  Flex,
-} from "@chakra-ui/react";
-import React from 'react'
-import './App.css';
+import { ChakraProvider, DarkMode, Flex } from "@chakra-ui/react";
+import React from "react";
+import "./App.css";
 import AppsWrapper from "./components/AppsWrapper";
 
-function App() {  
+const App = (): JSX.Element => {
   return (
     <ChakraProvider>
       <DarkMode>
@@ -24,7 +20,7 @@ function App() {
         </Flex>
       </DarkMode>
     </ChakraProvider>
-  )
-}  
+  );
+}
 
-export default App
+export default App;

@@ -1,4 +1,4 @@
-export const GET_VIDEO_FILESNIPPET: String = `
+export const GET_VIDEO_FILESNIPPET = `
 query MyQuery($videoId: String!) {
   video_by_pk(videoId: $videoId) {
     fileSnippets {
@@ -19,25 +19,25 @@ query MyQuery($videoId: String!) {
     }
   }
 }
-`
+`;
 // it is created in video processing not as a schema from client
-export const CREATE_FILESNIPPET: String = `
+export const CREATE_FILESNIPPET = `
 mutation MyMutation($fps: Int!, $url: String!) {
   makeFileSnippet(fps: $fps, url: $url) {
     videoId
   }
 }
-`
+`;
 
-export const SAVE_FILESNIPPET: String = `
+export const SAVE_FILESNIPPET = `
 mutation MyMutation($dimensions: Shape!, $fps: Int!, $githubURL: String!, $payload: [FrameData!]!, $videoId: String!) {
   makeFileSnippet(dimensions: $dimensions, fps: $fps, githubURL: $githubURL, videoId: $videoId, payload: $payload) {
     videoId
   }
 }
-`
+`;
 
-export const CREATE_LIVECOMMENT: String = `
+export const CREATE_LIVECOMMENT = `
 mutation MyMutation($videoId: String!, $comment: String!, $user: String!, $time: Int!) {
   insert_liveComment(objects: {videoId: $videoId, time: $time, user: $user, comment: $comment}) {
     returning {
@@ -45,15 +45,9 @@ mutation MyMutation($videoId: String!, $comment: String!, $user: String!, $time:
     }
   }
 }
-`
-// {
-//   "videoId": "hQzlNlHcN0A",
-//   "comment": "What happens at the start?",
-//   "user": "questionNarc",
-//   "time": 3
-// }
+`;
 
-export const CREATE_REPLY: String = `
+export const CREATE_REPLY = `
 mutation MyMutation($user: String!, $liveComment: uuid!, $comment: String!) {
   insert_reply(objects: {comment: $comment, liveComment: $liveComment, user: $user}) {
     returning {
@@ -61,9 +55,9 @@ mutation MyMutation($user: String!, $liveComment: uuid!, $comment: String!) {
     }
   }
 }
-`
+`;
 
-export const GET_VIDEO_LIVECOMMENT: String = `
+export const GET_VIDEO_LIVECOMMENT = `
 query MyQuery($videoId: String!) {
   video_by_pk(videoId: $videoId) {
     liveComments {
@@ -77,4 +71,4 @@ query MyQuery($videoId: String!) {
     }
   }
 }
-`
+`;
