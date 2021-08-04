@@ -490,7 +490,8 @@ const fileSnippetFunction = () => {
       return newFileInFrame
     }
     return undefined
-  }
+  } 
+  
 
   if (videoPlayer){
     const currentFD = currentFrameData(htmlVideoPlayer)
