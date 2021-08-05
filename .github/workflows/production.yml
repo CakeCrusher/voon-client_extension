@@ -1,0 +1,20 @@
+name: Proudcution pipeline
+
+on:
+  pull_request:
+    branches: [master]
+    types: [opened]
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '14'
+      - name: npm install
+        run: npm install
+      - name: npm run build
+        run: npm run build
