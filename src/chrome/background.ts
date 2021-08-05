@@ -67,13 +67,8 @@ const onMessageListener = (
     console.log("Creating file snippet as requested by React");
 
     if (message.tab && message.tab.url && message.tab.id) {
-      createFileSnippet(
-        message.tab.url,
-        message.payload.fps,
-        message.tab.id
-      );
+      createFileSnippet(message.tab.url, message.payload.fps);
     }
-
   }
 };
 chrome.runtime.onMessage.addListener(onMessageListener);

@@ -2,7 +2,6 @@ import React, { FunctionComponent, useState } from "react";
 import { Flex, Text, Icon } from "@chakra-ui/react";
 import "../App.css";
 
-/* eslint-disable */
 type AppProps = {
   color: string;
   title: string;
@@ -10,9 +9,8 @@ type AppProps = {
   icon: any;
   children: any;
   activated: boolean;
-  setActivated: Function;
+  setActivated: (state: boolean) => void;
 };
-/* eslint-enable */
 
 const AppContainer: FunctionComponent<AppProps> = (props) => {
   const [hovered, setHovered] = useState(false);

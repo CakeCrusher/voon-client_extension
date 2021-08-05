@@ -20,7 +20,6 @@ import {
   greenBoxStyle,
 } from "./style";
 
-/* eslint-disable */
 // navigation
 let loadingURL = "";
 let completeURL = "";
@@ -28,9 +27,9 @@ let completeURL = "";
 let screen: HTMLElement | null;
 let screenHeight: string | undefined;
 let screenWidth: string | undefined;
-let videoPlayer: any | undefined;
+let videoPlayer: HTMLElement | null;
 let overlayShowing: boolean | undefined;
-let htmlVideoPlayer: any | undefined;
+let htmlVideoPlayer: HTMLVideoElement | null;
 let currentTime: number | undefined;
 let duration: number | undefined;
 let redBox: HTMLElement | undefined;
@@ -44,12 +43,13 @@ let code: HTMLIFrameElement | undefined;
 let liveCommentsContainer: HTMLElement | undefined;
 let liveComments: LiveCommentOut[] | undefined;
 let liveCommentState: LiveComment | undefined;
-/* eslint-enable */
+
+// make a chrome.storage.onChanged function with typescript
+
+// create a chrome extension listener for when storage changes
 
 // Storage management
-/* eslint-disable */
-const onStorageChange = async (changes: any, namespace: any) => {
-  /* eslint-enable */
+const onStorageChange = async (changes: any) => {
   const keysChanged = Object.keys(changes);
   console.log("Storage change: ", changes);
 
@@ -68,10 +68,8 @@ const onStorageChange = async (changes: any, namespace: any) => {
             active: true,
             currentWindow: true,
           };
-          /* eslint-disable */
           chrome.tabs &&
             chrome.tabs.query(queryInfo, (tabs: any) => {
-              /* eslint-enable */
               const message: ChromeMessage = {
                 from: Sender.Content,
                 message: Message.REQUEST_FILESNIPPET,
@@ -222,7 +220,7 @@ const contentMessageListener = async (
     message.from === Sender.Background &&
     message.message === Message.INITIATE_ENVIRONMENT
   ) {
-    initiateEnvironment(message.payload.url);
+    initiateEnvironment();
   }
   if (
     sender.id === chrome.runtime.id &&
@@ -270,9 +268,9 @@ const resetContent = () => {
   screen = null;
   screenHeight = undefined;
   screenWidth = undefined;
-  videoPlayer = undefined;
+  videoPlayer = null;
   overlayShowing = undefined;
-  htmlVideoPlayer = undefined;
+  htmlVideoPlayer = null;
   currentTime = undefined;
   duration = undefined;
   if (redBox) {
@@ -301,7 +299,7 @@ const resetContent = () => {
   liveCommentsContainer = undefined;
   liveComments = undefined;
 };
-const initiateEnvironment = (url: string) => {
+const initiateEnvironment = () => {
   console.log("Initiating environment");
 
   // create a style element and append it to the head of the document
@@ -309,7 +307,6 @@ const initiateEnvironment = (url: string) => {
   baseStyle.type = "text/css";
   baseStyle.innerHTML = BASE_STYLE;
   document.head.appendChild(baseStyle);
-  const videoURL = url;
 
   // sets up containers red and green
   if (document.querySelector<HTMLElement>(".video-stream")) {
@@ -330,7 +327,9 @@ const initiateEnvironment = (url: string) => {
   }
 
   videoPlayer = document.getElementById("movie_player");
-  overlayShowing = !videoPlayer.classList.contains("ytp-autohide");
+  if (videoPlayer) {
+    overlayShowing = !videoPlayer.classList.contains("ytp-autohide");
+  }
 
   htmlVideoPlayer = document.getElementsByTagName("video")[0];
   currentTime = htmlVideoPlayer.currentTime;
@@ -447,8 +446,8 @@ const liveCommentFunction = async () => {
   }
 };
 const fileSnippetFunction = () => {
-  const videoPlayer: any = document.getElementById("movie_player");
-  const htmlVideoPlayer: any = document.getElementsByTagName("video")[0];
+  videoPlayer = document.getElementById("movie_player");
+  htmlVideoPlayer = document.getElementsByTagName("video")[0];
 
   const fileBtn = (
     ele: HTMLElement,
@@ -550,7 +549,6 @@ const fileSnippetFunction = () => {
 
   if (videoPlayer) {
     const currentFD = currentFrameData();
-    const currentFrame = currentFD ? currentFD.frame : undefined;
 
     // code.style.display = 'none'
     if (fileSnippetContainer) {

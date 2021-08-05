@@ -1,11 +1,9 @@
-import {
-  LiveCommentIn,
-  makeFileSnippetIn,
-  Message,
-  Sender,
-} from "./types";
+import { LiveCommentIn, makeFileSnippetIn, Message, Sender } from "./types";
 
-export const fetchGraphQL = async (schema: string, variables: Object = {}) => {
+export const fetchGraphQL = async (
+  schema: string,
+  variables: any = {}
+): Promise<any> => {
   const graphql = JSON.stringify({
     query: schema,
     variables,
@@ -27,7 +25,7 @@ export const fetchGraphQL = async (schema: string, variables: Object = {}) => {
 
 export const postNewFileSnippet = async (
   createFileSnippetVariables: makeFileSnippetIn
-) => {
+): Promise<any> => {
   console.log("createFileSnippetVariables", createFileSnippetVariables);
 
   const requestOptions = {
@@ -44,7 +42,9 @@ export const postNewFileSnippet = async (
   return res;
 };
 
-export const fetchLiveComments = async (variables: LiveCommentIn) => {
+export const fetchLiveComments = async (
+  variables: LiveCommentIn
+): Promise<any> => {
   console.log("fetchingLiveComments");
 
   const requestOptions = {
@@ -66,9 +66,8 @@ export const fetchLiveComments = async (variables: LiveCommentIn) => {
 
 export const createFileSnippet = async (
   url: string,
-  fps: number,
-  tabId: number
-) => {
+  fps: number
+): Promise<any> => {
   console.log(`Creating file snippet on background`);
 
   // await wait(1000)
@@ -95,6 +94,8 @@ export const createFileSnippet = async (
     message: Message.FINISHED_FILESNIPPET,
   };
   chrome.runtime.sendMessage(message);
+
+  return res;
 };
 
 export const wait = (ms: number): Promise<boolean> =>

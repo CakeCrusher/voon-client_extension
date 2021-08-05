@@ -53,11 +53,6 @@ export type makeFileSnippetIn = {
   per_frame: number;
 };
 
-type Shape = {
-  x: number;
-  y: number;
-};
-
 export type FileSnippetOut = {
   githubURL: string;
   fps: number;

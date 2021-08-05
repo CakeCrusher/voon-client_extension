@@ -4,13 +4,7 @@ import "../App.css";
 
 import { fetchGraphQL, postNewFileSnippet } from "../helperFunctions";
 import { SAVE_FILESNIPPET } from "../schemas";
-import {
-  ChromeMessage,
-  FileSnippet,
-  makeFileSnippetIn,
-  Message,
-  Sender,
-} from "../types";
+import { ChromeMessage, makeFileSnippetIn, Message, Sender } from "../types";
 
 const FileSnippetContent: FunctionComponent = () => {
   const [url, setUrl] = useState("");
@@ -94,10 +88,7 @@ const FileSnippetContent: FunctionComponent = () => {
       createFileSnippetVariables
     );
     console.log("madeFileSnippet", madeFileSnippet);
-    const saveFileSnippet = await fetchGraphQL(
-      SAVE_FILESNIPPET,
-      madeFileSnippet
-    );
+    await fetchGraphQL(SAVE_FILESNIPPET, madeFileSnippet);
 
     setLoadingProgress(100);
     setTimeout(() => {

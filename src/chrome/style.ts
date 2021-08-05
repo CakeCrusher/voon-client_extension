@@ -1,4 +1,4 @@
-import { DataInFrame, DataInFrameOut } from "../types";
+import { DataInFrameOut } from "../types";
 
 export const BASE_STYLE = `
     .codeSnippetBtn {
@@ -76,7 +76,7 @@ export const HIDDEN = `
     display:none;
 `;
 
-export const fileSnippetBtnStyle = (relFiF: DataInFrameOut) => `
+export const fileSnippetBtnStyle = (relFiF: DataInFrameOut): string => `
     height:${relFiF.height}px;
     width:${relFiF.width}px;
     left:${relFiF.x}px;
@@ -87,7 +87,7 @@ export const codeSnippetRMStyle = (
   currentDisplay: string,
   relFiF: DataInFrameOut,
   screenHeight: string
-) => `
+): string => `
     position:absolute;
     display:${currentDisplay};
     z-index:11;
@@ -102,7 +102,7 @@ export const codeSnippetLMStyle = (
   endFiF: number,
   screenWidth: string,
   screenHeight: string
-) => `
+): string => `
     position:absolute;
     display:${currentDisplay};
     z-index:11;
@@ -112,7 +112,7 @@ export const codeSnippetLMStyle = (
     height:${screenHeight}
 `;
 
-export const redBoxStyle = (screenHeight: string) => `
+export const redBoxStyle = (screenHeight: string): string => `
     position:relative;
     left:-1px;
     display:flex;
@@ -122,7 +122,10 @@ export const redBoxStyle = (screenHeight: string) => `
     width:100%;
 `;
 
-export const greenBoxStyle = (screenWidth: string, screenHeight: string) => `
+export const greenBoxStyle = (
+  screenWidth: string,
+  screenHeight: string
+): string => `
     position: relative;
     bottom:0;
     height:${screenHeight};

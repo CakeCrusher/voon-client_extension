@@ -3,26 +3,23 @@ import { Checkbox, Flex } from "@chakra-ui/react";
 import "../App.css";
 import { LiveComment } from "../types";
 
-/* eslint-disable */
 type LiveCommentContentProps = {
   liveComment: LiveComment;
-  setLiveComment: any;
+  setLiveComment: React.Dispatch<LiveComment>;
 };
-/* eslint-enable */
 
-const LiveCommentContent: FunctionComponent<LiveCommentContentProps> = ({
-  liveComment,
-  setLiveComment,
-}) => {
+const LiveCommentContent: FunctionComponent<LiveCommentContentProps> = (
+  props: LiveCommentContentProps
+) => {
   const [showReplies, setShowReplies] = useState(false);
 
   const onLowVisibilityChange = () => {
     const newLiveComment = {
-      ...liveComment,
-      lowVisibility: !liveComment.lowVisibility,
+      ...props.liveComment,
+      lowVisibility: !props.liveComment.lowVisibility,
     };
     chrome.storage.sync.set({ liveComment: newLiveComment });
-    setLiveComment(newLiveComment);
+    props.setLiveComment(newLiveComment);
   };
 
   return (
@@ -35,7 +32,7 @@ const LiveCommentContent: FunctionComponent<LiveCommentContentProps> = ({
       >
         <Checkbox
           marginRight="30px"
-          isChecked={liveComment.lowVisibility}
+          isChecked={props.liveComment.lowVisibility}
           onChange={() => onLowVisibilityChange()}
         >
           Low visibility

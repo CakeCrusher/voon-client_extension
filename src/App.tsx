@@ -21,6 +21,6 @@ const App = (): JSX.Element => {
       </DarkMode>
     </ChakraProvider>
   );
-}
+};
 
 export default App;
