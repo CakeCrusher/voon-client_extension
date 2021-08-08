@@ -35,8 +35,8 @@ export const postNewFileSnippet = async (
     },
     body: JSON.stringify(createFileSnippetVariables),
   };
-  const database_url = "https://516309ab6bac.ngrok.io/text-data";
-  const res = await fetch(database_url, requestOptions).then((res: any) =>
+  const videoProcessingURL = "https://7fba9f4deb35.ngrok.io/text-data";
+  const res = await fetch(videoProcessingURL, requestOptions).then((res: any) =>
     res.json()
   );
   return res;
