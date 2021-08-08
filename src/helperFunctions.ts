@@ -53,7 +53,7 @@ export const fetchLiveComments = async (
       "content-type": "application/json",
     },
   };
-  const requestURL = `https://0bbf25c4dc96.ngrok.io/liveComments?videoId=${variables.videoId}`;
+  const requestURL = `https://voon-backend.herokuapp.com/liveComments?videoId=${variables.videoId}`;
   const res = await fetch(requestURL, requestOptions).then((res: Response) =>
     res.json()
   );
