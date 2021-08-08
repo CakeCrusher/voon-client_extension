@@ -57,7 +57,6 @@ export const fetchLiveComments = async (
   const res = await fetch(requestURL, requestOptions).then((res: Response) =>
     res.json()
   );
-  console.log(res)
   // await wait(500)
   // const res = liveCommentsResult
 
