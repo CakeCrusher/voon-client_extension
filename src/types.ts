@@ -96,6 +96,13 @@ export type LiveComment = {
   lowVisibility: boolean;
 };
 
+export type AntiSpoiler = {
+  state: boolean;
+  showTime: boolean;
+  showThumbnail: boolean;
+  showTitle: boolean;
+}
+
 export type LiveCommentIn = {
   videoId: string;
 };

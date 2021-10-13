@@ -43,6 +43,14 @@ let code: HTMLIFrameElement | undefined;
 let liveCommentsContainer: HTMLElement | undefined;
 let liveComments: LiveCommentOut[] | undefined;
 let liveCommentState: LiveComment | undefined;
+// AntiSpoiler 
+let videoTimeDisplay: Element | null;
+let originalTimeText: HTMLSpanElement | undefined;
+let timeTextCopy: HTMLSpanElement | undefined;
+let scrubber: HTMLElement | null;
+let progressBar: HTMLElement | null;
+let tooltipTime: HTMLElement | null;
+let chaptersContainer: HTMLElement | null;
 
 // make a chrome.storage.onChanged function with typescript
 
@@ -125,6 +133,34 @@ const onStorageChange = async (changes: any) => {
       }
     }
   }
+  if (keysChanged.includes("antiSpoiler")) {
+    if (changes.antiSpoiler.newValue && changes.antiSpoiler.oldValue) {
+      
+      if (
+        changes.antiSpoiler.newValue.state !==
+        changes.antiSpoiler.oldValue.state
+      ) {
+        // when liveComment activation changes
+        if (changes.antiSpoiler.newValue.state) {
+          initiateAntiSpoiler();
+        }
+        if (!changes.antiSpoiler.newValue.state && videoTimeDisplay) {
+          removeAntiSpoiler()
+        }
+      }
+      // if (
+      //   changes.liveComment.newValue.lowVisibility !==
+      //   changes.liveComment.oldValue.lowVisibility
+      // ) {
+      //   // when liveComment activation changes
+      //   if (changes.liveComment.newValue.lowVisibility) {
+      //     // when liveComment has low visibility
+      //   } else {
+      //     // when liveComment has normal visibility
+      //   }
+      // }
+    }
+  }
 };
 chrome.storage.onChanged.addListener(onStorageChange);
 const initiateFileSnippetContainer = () => {
@@ -154,6 +190,55 @@ const initiateLiveCommentsContainer = () => {
     greenBox.appendChild(liveCommentsContainer);
   }
 };
+
+const initiateAntiSpoiler = () => {
+  videoTimeDisplay = document.querySelector('.ytp-time-display')
+  if (videoTimeDisplay) {
+    originalTimeText = videoTimeDisplay.querySelectorAll('span')[1]
+    originalTimeText.style.display = 'none'
+    timeTextCopy = document.createElement('span')
+    if (timeTextCopy) {
+      timeTextCopy.innerHTML = '<span class="ytp-time-current">?</span><span class="ytp-time-separator"> / </span><span class="ytp-time-duration">?</span>'
+      videoTimeDisplay.appendChild(timeTextCopy)
+    }
+  }
+  scrubber = document.querySelector<HTMLElement>('.ytp-scrubber-container')
+  if (scrubber) {
+    scrubber.style.display = 'none'
+  }
+  progressBar = document.querySelectorAll<HTMLElement>('.ytp-timed-markers-container')[0]
+  if (progressBar) {
+    progressBar.style.backgroundColor = '#7a7a7a'
+  }
+  tooltipTime = document.querySelectorAll<HTMLElement>('.ytp-tooltip-text')[0]
+  if (tooltipTime) {
+    tooltipTime.style.display = 'none'
+  }
+  chaptersContainer = document.querySelectorAll<HTMLElement>('.ytp-chapters-container')[0]
+  if (chaptersContainer) {
+    chaptersContainer.style.display = 'none'
+  }
+}
+const removeAntiSpoiler = () => {
+  if (originalTimeText) {
+    originalTimeText.style.display = 'block'
+  }
+  if (timeTextCopy) {
+    timeTextCopy.remove()
+  }
+  if (scrubber) {
+    scrubber.style.display = 'block'
+  }
+  if (progressBar) {
+    progressBar.style.backgroundColor = ''
+  }
+  if (tooltipTime) {
+    tooltipTime.style.display = 'block'
+  }
+  if (chaptersContainer) {
+    chaptersContainer.style.display = 'block'
+  }
+}
 
 // Extension messaging
 const contentMessageListener = async (

@@ -4,10 +4,11 @@ import AppContainer from "./AppContainer";
 import "../App.css";
 
 import { BsFileEarmarkCode } from "react-icons/bs";
-import { AiOutlineComment } from "react-icons/ai";
+import { AiOutlineComment, AiOutlineEyeInvisible } from "react-icons/ai";
 import FileSnippetContent from "./FileSnippetContent";
 import LiveCommentContent from "./LiveCommentContent";
-import { FileSnippet, LiveComment } from "../types";
+import AntiSpoilerContent from "./AntiSpoiler";
+import { AntiSpoiler, FileSnippet, LiveComment } from "../types";
 
 const AppsWrapper: FunctionComponent = () => {
   const [fileSnippet, setFileSnippet] = useState<FileSnippet>({
@@ -17,11 +18,18 @@ const AppsWrapper: FunctionComponent = () => {
     state: false,
     lowVisibility: false,
   });
+  const [antiSpoiler, setAntiSpoiler] = useState<AntiSpoiler>({
+    state: false,
+    showTime: false,
+    showThumbnail: false,
+    showTitle: false,
+  });
 
   useEffect(() => {
-    chrome.storage.sync.get(["fileSnippet", "liveComment"], (res) => {
+    chrome.storage.sync.get(["fileSnippet", "liveComment", "antiSpoiler"], (res) => {
       setFileSnippet(res.fileSnippet);
       setLiveComment(res.liveComment);
+      setAntiSpoiler(res.antiSpoiler);
     });
   }, []);
 
@@ -36,6 +44,12 @@ const AppsWrapper: FunctionComponent = () => {
     console.log("liveComment changed");
     chrome.storage.sync.set({ liveComment: newLiveComment });
     setLiveComment(newLiveComment);
+  };
+  const setAntiSpoilerActivated = (state: boolean) => {
+    const newAntiSpoiler = { ...antiSpoiler, state };
+    console.log("antiSpoiler changed");
+    chrome.storage.sync.set({ antiSpoiler: newAntiSpoiler });
+    setAntiSpoiler(newAntiSpoiler);
   };
 
   return (
@@ -61,6 +75,19 @@ const AppsWrapper: FunctionComponent = () => {
         <LiveCommentContent
           liveComment={liveComment}
           setLiveComment={setLiveComment}
+        />
+      </AppContainer>
+      <AppContainer
+        color="#7a7a7a"
+        title="Anti Spoiler"
+        description="Eliminates time indications."
+        icon={AiOutlineEyeInvisible}
+        activated={antiSpoiler && antiSpoiler.state}
+        setActivated={setAntiSpoilerActivated}
+      >
+        <AntiSpoilerContent
+          antiSpoiler={antiSpoiler}
+          setAntiSpoiler={setAntiSpoiler}
         />
       </AppContainer>
     </Flex>
