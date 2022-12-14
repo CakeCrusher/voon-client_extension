@@ -17,6 +17,7 @@ const AppsWrapper: FunctionComponent = () => {
     state: false,
     lowVisibility: false,
   });
+  // CONTRIBUTE: Add state for your app here
 
   useEffect(() => {
     chrome.storage.sync.get(["fileSnippet", "liveComment"], (res) => {
@@ -37,6 +38,7 @@ const AppsWrapper: FunctionComponent = () => {
     chrome.storage.sync.set({ liveComment: newLiveComment });
     setLiveComment(newLiveComment);
   };
+  // CONTRIBUTE: Add a function activates your app
 
   return (
     <Flex direction="column" w="full" margin="2px 0px">
@@ -63,6 +65,8 @@ const AppsWrapper: FunctionComponent = () => {
           setLiveComment={setLiveComment}
         />
       </AppContainer>
+      {/* CONTIBUTE: Add an App container for your app with a "<APP>Content.tsx" child inside it. */}
+      {/* The app "<APP>Content.tsx" will handle the more nuanced behaviour.  */}
     </Flex>
   );
 };

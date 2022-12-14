@@ -12,6 +12,7 @@ export enum Message {
   FINISHED_FILESNIPPET = "finished file snippet",
   ACTIVATE_LIVECOMMENT = "activate live comment",
   CHANGE_LIVECOMMENT_VISIBILITY = "change live comment visibility",
+  // CONTRIBUTE: Add messages for your app here
   INITIATE_ENVIRONMENT = "initiate environment",
   VIDEODETAILS = "video details",
   RESET_CONTENT = "reset content",

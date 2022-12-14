@@ -43,6 +43,7 @@ let code: HTMLIFrameElement | undefined;
 let liveCommentsContainer: HTMLElement | undefined;
 let liveComments: LiveCommentOut[] | undefined;
 let liveCommentState: LiveComment | undefined;
+// CONTRIBUTE: Add the states of your app here
 
 // make a chrome.storage.onChanged function with typescript
 
@@ -257,6 +258,7 @@ const contentMessageListener = async (
     fileSnippet = message.payload.fileSnippet;
     fileSnippetFunction();
   }
+  // CONTRIBUTE: update the state of your app here
 };
 chrome.runtime.onMessage.addListener(contentMessageListener);
 const resetContent = () => {
@@ -637,5 +639,6 @@ const clock = () => {
   if (fileSnippet && fileSnippetState && fileSnippetState.state) {
     fileSnippetFunction();
   }
+  // CONTRIBUTE: Add script under the conditions that the state is activated
 };
 setInterval(clock, 500);

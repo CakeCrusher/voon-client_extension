@@ -11,7 +11,8 @@ Providing a framework to facilitate the incorporation of features into youtube. 
 Voon was inspired by the lack of features provided by video streaming sites (where youtube easily claims the majority of the market). The solution, I concluded, was that instead of competing against the goliath of youtube I would build a wrapper framework built on top of youtube (if you cant beat them join them).
 
 
-
+## Contributing
+Search for the keyword `CONTRIBUTE:` for guidance on where to make changes to contribute your voon app.
 
 ## Getting Started with Extension client
 

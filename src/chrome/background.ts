@@ -70,6 +70,7 @@ const onMessageListener = (
       createFileSnippet(message.tab.url, message.payload.fps);
     }
   }
+  // CONTRIBUTE: Add condition to act on your messages
 };
 chrome.runtime.onMessage.addListener(onMessageListener);
 const initiateEnvironmentIfPossible = async (tabId: number, url: string) => {
